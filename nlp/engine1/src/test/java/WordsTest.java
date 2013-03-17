@@ -22,6 +22,10 @@ public class WordsTest {
 
     static List<String> twoGramResults = new ArrayList<String>();
 
+    static Map<NGramTag,Integer> threeGramCountMap = new HashMap<NGramTag, Integer>();
+
+    static List<String> threeGramResults = new ArrayList<String>();
+
 
     public static void main(String[] args) throws Exception {
 
@@ -32,6 +36,8 @@ public class WordsTest {
         calculateOneGramCounts(input);
 
         printResults();
+
+        assertResults();
 
     }
 
@@ -111,6 +117,17 @@ public class WordsTest {
                         count =  twoGramCountMap.get(nGramTag);
                     }
                     twoGramCountMap.put(nGramTag,++count);
+
+                    if(i < wordTagsInSentence.length - 2){
+                        String tagAfterAfter = wordTagsInSentence[i+2].getTag();
+                        NGramTag threeGramTag = new NGramTag(3,tagBefore,tagAfter,tagAfterAfter);
+
+                        count = 0;
+                        if(threeGramCountMap.containsKey(threeGramTag)){
+                            count =  threeGramCountMap.get(threeGramTag);
+                        }
+                        threeGramCountMap.put(threeGramTag,++count);
+                    }
                 }
         }
     }
@@ -128,6 +145,20 @@ public class WordsTest {
             System.out.println(twoGramResult);
         }
 
+        entrySet = threeGramCountMap.entrySet();
+        iter = entrySet.iterator();
+        while(iter.hasNext()){
+            Map.Entry<NGramTag,Integer> entry = iter.next();
+            threeGramResults.add(entry.getValue() + " 3-GRAM " + entry.getKey().getTag() + " " + entry.getKey().getOthers()[0] + " " + entry.getKey().getOthers()[1]);
+        }
+
+        for(String threeGramResult: threeGramResults){
+            System.out.println(threeGramResult);
+        }
+
+    }
+
+    public static void assertResults(){
         assertCondition(twoGramCountMap.get(new NGramTag(2,"I-GENE","I-GENE")),new Integer("24435"));
         assertCondition(twoGramCountMap.get(new NGramTag(2,"O","I-GENE")),new Integer("15888"));
         assertCondition(twoGramCountMap.get(new NGramTag(2,"I-GENE","O")),new Integer("16624"));
@@ -137,6 +168,15 @@ public class WordsTest {
         assertCondition(twoGramCountMap.get(new NGramTag(2,"O","O")),new Integer("315457"));
         assertCondition(twoGramCountMap.get(new NGramTag(2,"*","I-GENE")),new Integer("749"));
         assertCondition(twoGramCountMap.get(new NGramTag(2,"*","*")),new Integer("13796"));
+
+
+        assertCondition(threeGramCountMap.get(new NGramTag(3,"*","*","I-GENE")),new Integer("749"));
+        assertCondition(threeGramCountMap.get(new NGramTag(3,"I-GENE","O","O")),new Integer("11320"));
+        assertCondition(threeGramCountMap.get(new NGramTag(3,"I-GENE","I-GENE","O")),new Integer("9622"));
+        assertCondition(threeGramCountMap.get(new NGramTag(3,"O","O","O")),new Integer("291686"));
+        assertCondition(threeGramCountMap.get(new NGramTag(3,"O","I-GENE","STOP")),new Integer("1"));
+
+
     }
 
     private static List<String> getContents(String fileLocation) throws IOException {

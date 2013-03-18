@@ -16,16 +16,14 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <junit.version>4.8.2</junit.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
+     <dependencies>
           <dependency>
               <groupId>junit</groupId>
               <artifactId>junit</artifactId>
               <version>${junit.version}</version>
               <scope>test</scope>
           </dependency>
-        </dependencies>
-    </dependencyManagement>
+     </dependencies>
       
 
 </project>

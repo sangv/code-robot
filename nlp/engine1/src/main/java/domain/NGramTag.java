@@ -3,11 +3,8 @@ package domain;
 import java.util.Arrays;
 
 /**
- * Created with IntelliJ IDEA.
- * User: sang
- * Date: 3/16/13
- * Time: 11:34 AM
- * To change this template use File | Settings | File Templates.
+ *
+ * @author Sang Venkatraman
  */
 public class NGramTag {
 

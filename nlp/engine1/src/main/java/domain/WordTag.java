@@ -1,11 +1,8 @@
 package domain;
 
 /**
- * Created with IntelliJ IDEA.
- * User: sang
- * Date: 3/16/13
- * Time: 10:42 AM
- * To change this template use File | Settings | File Templates.
+ *
+ * @author Sang Venkatraman
  */
 public class WordTag {
 

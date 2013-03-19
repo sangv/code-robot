@@ -11,11 +11,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: sang
- * Date: 3/18/13
- * Time: 3:30 PM
- * To change this template use File | Settings | File Templates.
+ * This class provides a file based implementation of SentenceReader
+ *
+ * @author Sang Venkatraman
+ *
  */
 public class FileBasedSentenceReader implements SentenceReader {
 

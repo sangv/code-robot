@@ -3,11 +3,13 @@ package service;
 import domain.NGramTag;
 import domain.WordTag;
 import domain.WordTagCounts;
-import reader.FileBasedSentenceReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reader.SentenceReader;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -20,6 +22,8 @@ public class NGramWordTagger implements WordTagger{
     private WordTagCounts wordTagCounts;
 
     private List<List<WordTag>> sentences;
+
+    private static final Logger LOG = LoggerFactory.getLogger(NGramWordTagger.class);
 
     @Override
     public void init(String location) throws IOException {
@@ -41,6 +45,9 @@ public class NGramWordTagger implements WordTagger{
     }
 
     protected void calculateNGramCounts(List<List<WordTag>> sentences){
+
+        LOG.info("Pre-calculating NGramCounts");
+
         wordTagCounts = new WordTagCounts();
         for(List<WordTag> sentence: sentences){
             WordTag[] wordTagsInSentence = sentence.toArray(new WordTag[]{});

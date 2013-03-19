@@ -6,11 +6,9 @@ package domain;
  */
 public class WordTag {
 
-    enum TAG {IGENE};
+    private String word;
 
     private String tag;
-
-    private String word;
 
     public WordTag(String word, String tag) {
         this.word = word;
@@ -28,7 +26,7 @@ public class WordTag {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof WordTag)) return false;
 
         WordTag wordTag = (WordTag) o;
 
@@ -40,8 +38,16 @@ public class WordTag {
 
     @Override
     public int hashCode() {
-        int result = tag.hashCode();
-        result = 31 * result + word.hashCode();
+        int result = word.hashCode();
+        result = 31 * result + tag.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "WordTag{" +
+                "word='" + word + '\'' +
+                ", tag='" + tag + '\'' +
+                '}';
     }
 }

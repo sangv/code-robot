@@ -55,12 +55,18 @@ public class NGramWordTagger implements WordTagger{
             for(int i=0; i< wordTagsInSentence.length; ++i){
 
                 //calculate count of word-tag combinations
-                if(!("*".equals(wordTagsInSentence[i].getTag()) || "*".equals(wordTagsInSentence[i].getTag()))){
+                if(!("*".equals(wordTagsInSentence[i].getTag()) || "STOP".equals(wordTagsInSentence[i].getTag()))){
                     int count = 0;
                     if(wordTagCounts.getWordTagCountMap().containsKey(wordTagsInSentence[i])){
                         count =  wordTagCounts.getWordTagCountMap().get(wordTagsInSentence[i]);
                     }
                     wordTagCounts.getWordTagCountMap().put(wordTagsInSentence[i], ++count);
+
+                    count = 0;
+                    if(wordTagCounts.getTagCountMap().containsKey(wordTagsInSentence[i].getTag())){
+                        count =  wordTagCounts.getTagCountMap().get(wordTagsInSentence[i].getTag());
+                    }
+                    wordTagCounts.getTagCountMap().put(wordTagsInSentence[i].getTag(), ++count);
 
                     //calculate 1-gram tag counts
                     count = 0;

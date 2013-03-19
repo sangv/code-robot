@@ -2,17 +2,24 @@ import domain.NGramTag;
 import domain.WordTag;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reader.FileBasedSentenceReader;
 import service.NGramWordTagger;
 import service.WordTagger;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static junit.framework.Assert.assertEquals;
 
 public class WordsTest {
 
     private static WordTagger wordTagger;
+
+    private static final Logger LOG = LoggerFactory.getLogger(WordsTest.class);
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -56,4 +63,50 @@ public class WordsTest {
     public void testWordTags(){
         assertEquals(wordTagger.getWordTagCounts().getWordTagCountMap().get(new WordTag("consensus", "I-GENE")),new Integer("13"));
     }
+
+    @Test
+    public void testReplaceLessFrequentWordTags(){
+        Map<WordTag,Integer> taggedWords = wordTagger.getWordTagCounts().getWordTagCountMap();
+        assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
+
+        Map<WordTag,Integer> toBeReplacedWords = new HashMap<WordTag,Integer>();
+        Iterator<Entry<WordTag,Integer>> iter = taggedWords.entrySet().iterator();
+        while(iter.hasNext()){
+            Entry<WordTag,Integer> entry = iter.next();
+            if(entry.getValue() < 5){
+               toBeReplacedWords.put(new WordTag(entry.getKey().getWord(),entry.getKey().getTag()),entry.getValue());
+            }
+        }
+
+        for(Entry<WordTag,Integer> entry :toBeReplacedWords.entrySet()){
+            taggedWords.remove(new WordTag(entry.getKey().getWord(),entry.getKey().getTag()));
+            taggedWords.put(new WordTag(entry.getKey().getWord(), "_RARE_"), entry.getValue());
+
+        }
+        assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","_RARE_")));
+        printMap(wordTagger.getWordTagCounts().getTagCountMap());
+        Integer iGeneTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("I-GENE");
+        Integer oTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("O");
+        calculateExpectation(iGeneTagCount,oTagCount,taggedWords);
+    }
+
+    private Map<WordTag,Float> calculateExpectation(Integer iGeneTagCount, Integer oTagCount,Map<WordTag,Integer> taggedWords) {
+        Map<WordTag,Float> expectationMap = new HashMap<WordTag,Float>();
+        for(Entry<WordTag,Integer> entry :taggedWords.entrySet()){
+            Float expectationOfXgivenY = ((float) entry.getValue())/((float)iGeneTagCount);
+            expectationMap.put(entry.getKey(),expectationOfXgivenY);
+        }
+        printMap(expectationMap);
+        return expectationMap;
+    }
+
+    public void printMap(Map map){
+        Iterator iter = map.entrySet().iterator();
+        while(iter.hasNext()){
+           Map.Entry entry = (Map.Entry) iter.next();
+           LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
+        }
+    }
+    
+    
 }

@@ -13,6 +13,8 @@ public class WordTagCounts {
 
     Map<WordTag,Integer> wordTagCountMap = new HashMap<WordTag, Integer>();
 
+    Map<String,Integer> tagCountMap = new HashMap<String, Integer>();
+
     Map<NGramTag,Integer> oneGramCountMap =  new HashMap<NGramTag, Integer>();
 
     Map<NGramTag,Integer> twoGramCountMap =  new HashMap<NGramTag, Integer>();
@@ -49,5 +51,9 @@ public class WordTagCounts {
 
     public void setTwoGramCountMap(Map<NGramTag, Integer> twoGramCountMap) {
         this.twoGramCountMap = twoGramCountMap;
+    }
+
+    public Map<String, Integer> getTagCountMap() {
+        return tagCountMap;
     }
 }

@@ -1,7 +1,8 @@
 package service;
 
 import domain.NGramTag;
-import domain.WordTag;
+import domain.TaggedSentence;
+import domain.TaggedSentence.WordTag;
 import domain.WordTagCounts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ public class NGramWordTagger implements WordTagger{
 
     private WordTagCounts wordTagCounts;
 
-    private List<List<WordTag>> sentences;
+    private List<TaggedSentence> sentences;
 
     private static final Logger LOG = LoggerFactory.getLogger(NGramWordTagger.class);
 
@@ -44,60 +45,38 @@ public class NGramWordTagger implements WordTagger{
         return null;
     }
 
-    protected void calculateNGramCounts(List<List<WordTag>> sentences){
+    protected void calculateNGramCounts(List<TaggedSentence> sentences){
 
         LOG.info("Pre-calculating NGramCounts");
 
         wordTagCounts = new WordTagCounts();
-        for(List<WordTag> sentence: sentences){
-            WordTag[] wordTagsInSentence = sentence.toArray(new WordTag[]{});
+        for(TaggedSentence sentence: sentences){
 
-            for(int i=0; i< wordTagsInSentence.length; ++i){
+            WordTag[] wordTags =  sentence.getWordTags().toArray(new WordTag[]{});
+            for(int i=0; i< wordTags.length; i++){
 
                 //calculate count of word-tag combinations
-                if(!("*".equals(wordTagsInSentence[i].getTag()) || "STOP".equals(wordTagsInSentence[i].getTag()))){
-                    int count = 0;
-                    if(wordTagCounts.getWordTagCountMap().containsKey(wordTagsInSentence[i])){
-                        count =  wordTagCounts.getWordTagCountMap().get(wordTagsInSentence[i]);
-                    }
-                    wordTagCounts.getWordTagCountMap().put(wordTagsInSentence[i], ++count);
+                if(!("*".equals(wordTags[i].getTag()) || "STOP".equals(wordTags[i].getTag()))){
 
-                    count = 0;
-                    if(wordTagCounts.getTagCountMap().containsKey(wordTagsInSentence[i].getTag())){
-                        count =  wordTagCounts.getTagCountMap().get(wordTagsInSentence[i].getTag());
-                    }
-                    wordTagCounts.getTagCountMap().put(wordTagsInSentence[i].getTag(), ++count);
+                    updateCountMap(wordTagCounts.getWordTagCountMap(),wordTags[i]);
+                    updateCountMap(wordTagCounts.getTagCountMap(),wordTags[i].getTag());
 
-                    //calculate 1-gram tag counts
-                    count = 0;
-                    NGramTag nGramTag = new NGramTag(1,wordTagsInSentence[i].getTag());
-                    if(wordTagCounts.getOneGramCountMap().containsKey(nGramTag)){
-                        count =  wordTagCounts.getOneGramCountMap().get(nGramTag);
-                    }
-                    wordTagCounts.getOneGramCountMap().put(nGramTag, ++count);
+                    NGramTag nGramTag = new NGramTag(1,wordTags[i].getTag());
+                    updateCountMap(wordTagCounts.getOneGramCountMap(),nGramTag);
                 }
 
                 //calculate 2-gram tag counts
-                String tagBefore = wordTagsInSentence[i].getTag();
-                if(i < wordTagsInSentence.length - 1){
-                    String tagAfter = wordTagsInSentence[i+1].getTag();
+                String tagBefore = wordTags[i].getTag();
+                if(i < wordTags.length - 1){
+                    String tagAfter = wordTags[i+1].getTag();
                     NGramTag nGramTag = new NGramTag(2,tagBefore,tagAfter);
-                    int count = 0;
-                    if(wordTagCounts.getTwoGramCountMap().containsKey(nGramTag)){
-                        count =  wordTagCounts.getTwoGramCountMap().get(nGramTag);
-                    }
-                    wordTagCounts.getTwoGramCountMap().put(nGramTag, ++count);
+                    updateCountMap(wordTagCounts.getTwoGramCountMap(),nGramTag);
 
                     //calculate 3-gram tag counts
-                    if(i < wordTagsInSentence.length - 2){
-                        String tagAfterAfter = wordTagsInSentence[i+2].getTag();
+                    if(i < wordTags.length - 2){
+                        String tagAfterAfter = wordTags[i+2].getTag();
                         NGramTag threeGramTag = new NGramTag(3,tagBefore,tagAfter,tagAfterAfter);
-
-                        count = 0;
-                        if(wordTagCounts.getThreeGramCountMap().containsKey(threeGramTag)){
-                            count =  wordTagCounts.getThreeGramCountMap().get(threeGramTag);
-                        }
-                        wordTagCounts.getThreeGramCountMap().put(threeGramTag, ++count);
+                        updateCountMap(wordTagCounts.getThreeGramCountMap(),threeGramTag);
                     }
                 }
             }
@@ -118,6 +97,11 @@ public class NGramWordTagger implements WordTagger{
     @Override
     public void setSentenceReader(SentenceReader sentenceReader) {
         this.sentenceReader = sentenceReader;
+    }
+
+    protected synchronized void updateCountMap(Map map, Object key){
+        int count = (Integer) (map.containsKey(key) ? map.get(key) : 0);
+        map.put(key, ++count);
     }
 
 }

@@ -1,6 +1,6 @@
 package reader;
 
-import domain.WordTag;
+import domain.TaggedSentence;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,5 +17,5 @@ public interface SentenceReader {
      * @return
      * @throws IOException
      */
-    List<List<WordTag>> read(String location) throws IOException;
+    List<TaggedSentence> read(String location) throws IOException;
 }

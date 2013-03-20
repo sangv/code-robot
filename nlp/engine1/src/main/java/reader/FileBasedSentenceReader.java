@@ -1,6 +1,6 @@
 package reader;
 
-import domain.WordTag;
+import domain.TaggedSentence;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -19,21 +19,21 @@ import java.util.List;
 public class FileBasedSentenceReader implements SentenceReader {
 
     @Override
-    public List<List<WordTag>> read(String location) throws IOException{
-        List<List<WordTag>> sentences = new ArrayList<List<WordTag>>();
+    public List<TaggedSentence> read(String location) throws IOException{
+        List<TaggedSentence> sentences = new ArrayList<TaggedSentence>();
         List<String> input = getContents(location);
-        List<WordTag> wordTags = initSentences();
+        List<TaggedSentence.WordTag> wordTags = initSentences();
         for(String str: input){
             if(str == null || str.length() == 0) {
-                sentences.add(completeSentences(wordTags));
+                sentences.add(new TaggedSentence(completeSentences(wordTags)));
                 wordTags = initSentences();
             } else {
                 String[] splits = str.split(" ");
-                WordTag wordTag = new WordTag(splits[0],splits[1]);
+                TaggedSentence.WordTag wordTag = new TaggedSentence.WordTag(splits[0],splits[1]);
                 wordTags.add(wordTag);
             }
         }
-        sentences.add(completeSentences(wordTags));//calling it once after for the last sentence
+        sentences.add(new TaggedSentence(completeSentences(wordTags)));//calling it once after for the last sentence
         return sentences;
     }
 
@@ -48,15 +48,15 @@ public class FileBasedSentenceReader implements SentenceReader {
         return strings;
     }
 
-    protected List<WordTag> initSentences(){
-        List<WordTag> wordTags = new LinkedList<WordTag>();
-        wordTags.add(new WordTag("None","*"));
-        wordTags.add(new WordTag("None","*"));
+    protected List<TaggedSentence.WordTag> initSentences(){
+        List<TaggedSentence.WordTag> wordTags = new LinkedList<TaggedSentence.WordTag>();
+        wordTags.add(new TaggedSentence.WordTag("None","*"));
+        wordTags.add(new TaggedSentence.WordTag("None","*"));
         return wordTags;
     }
 
-    protected List<WordTag> completeSentences(List<WordTag> wordTags){
-        wordTags.add(new WordTag("None","STOP"));
+    protected List<TaggedSentence.WordTag> completeSentences(List<TaggedSentence.WordTag> wordTags){
+        wordTags.add(new TaggedSentence.WordTag("None","STOP"));
         return wordTags;
     }
 }

@@ -1,6 +1,6 @@
 package domain;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -11,15 +11,15 @@ import java.util.Map;
  */
 public class WordTagCounts {
 
-    Map<WordTag,Integer> wordTagCountMap = new HashMap<WordTag, Integer>();
+    Map<TaggedSentence.WordTag,Integer> wordTagCountMap = new LinkedHashMap<TaggedSentence.WordTag, Integer>();
 
-    Map<String,Integer> tagCountMap = new HashMap<String, Integer>();
+    Map<String,Integer> tagCountMap = new LinkedHashMap<String, Integer>();
 
-    Map<NGramTag,Integer> oneGramCountMap =  new HashMap<NGramTag, Integer>();
+    Map<NGramTag,Integer> oneGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
 
-    Map<NGramTag,Integer> twoGramCountMap =  new HashMap<NGramTag, Integer>();
+    Map<NGramTag,Integer> twoGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
 
-    Map<NGramTag,Integer> threeGramCountMap =  new HashMap<NGramTag, Integer>();
+    Map<NGramTag,Integer> threeGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
 
     public Map<NGramTag, Integer> getThreeGramCountMap() {
         return threeGramCountMap;
@@ -29,11 +29,11 @@ public class WordTagCounts {
         this.threeGramCountMap = threeGramCountMap;
     }
 
-    public Map<WordTag, Integer> getWordTagCountMap() {
+    public Map<TaggedSentence.WordTag, Integer> getWordTagCountMap() {
         return wordTagCountMap;
     }
 
-    public void setWordTagCountMap(Map<WordTag, Integer> wordTagCountMap) {
+    public void setWordTagCountMap(Map<TaggedSentence.WordTag, Integer> wordTagCountMap) {
         this.wordTagCountMap = wordTagCountMap;
     }
 

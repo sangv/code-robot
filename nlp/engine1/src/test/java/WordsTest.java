@@ -1,6 +1,6 @@
 import domain.NGramTag;
-import domain.WordTag;
-import org.junit.BeforeClass;
+import domain.TaggedSentence;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,21 +8,22 @@ import reader.FileBasedSentenceReader;
 import service.NGramWordTagger;
 import service.WordTagger;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import domain.TaggedSentence.WordTag;
+
+import java.io.*;
+import java.util.*;
 import java.util.Map.Entry;
 
 import static junit.framework.Assert.assertEquals;
 
 public class WordsTest {
 
-    private static WordTagger wordTagger;
+    private WordTagger wordTagger;
 
     private static final Logger LOG = LoggerFactory.getLogger(WordsTest.class);
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         wordTagger = new NGramWordTagger();
         wordTagger.setSentenceReader(new FileBasedSentenceReader());
         wordTagger.init("src/test/resources/gene.train");
@@ -65,11 +66,11 @@ public class WordsTest {
     }
 
     @Test
-    public void testReplaceLessFrequentWordTags(){
-        Map<WordTag,Integer> taggedWords = wordTagger.getWordTagCounts().getWordTagCountMap();
+    public void testReplaceLessFrequentWordTags() throws IOException {
+        Map<TaggedSentence.WordTag,Integer> taggedWords = wordTagger.getWordTagCounts().getWordTagCountMap();
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
 
-        Map<WordTag,Integer> toBeReplacedWords = new HashMap<WordTag,Integer>();
+        Map<WordTag,Integer> toBeReplacedWords = new LinkedHashMap<WordTag,Integer>();
         Iterator<Entry<WordTag,Integer>> iter = taggedWords.entrySet().iterator();
         while(iter.hasNext()){
             Entry<WordTag,Integer> entry = iter.next();
@@ -84,19 +85,65 @@ public class WordsTest {
 
         }
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","_RARE_")));
-        printMap(wordTagger.getWordTagCounts().getTagCountMap());
+        //printMap(wordTagger.getWordTagCounts().getTagCountMap());
         Integer iGeneTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("I-GENE");
         Integer oTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("O");
-        calculateExpectation(iGeneTagCount,oTagCount,taggedWords);
+        Integer rareTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("_RARE_");
+        calculateExpectation(wordTagger.getWordTagCounts().getTagCountMap(),taggedWords);
     }
 
-    private Map<WordTag,Float> calculateExpectation(Integer iGeneTagCount, Integer oTagCount,Map<WordTag,Integer> taggedWords) {
-        Map<WordTag,Float> expectationMap = new HashMap<WordTag,Float>();
-        for(Entry<WordTag,Integer> entry :taggedWords.entrySet()){
-            Float expectationOfXgivenY = ((float) entry.getValue())/((float)iGeneTagCount);
-            expectationMap.put(entry.getKey(),expectationOfXgivenY);
+    private Map<WordTag,Float> calculateExpectation(Map<String,Integer> tagMap,Map<WordTag,Integer> taggedWords) throws IOException {
+        Set<String> setOfWords = new LinkedHashSet<String>();
+        Iterator iter = taggedWords.entrySet().iterator();
+        while(iter.hasNext()){
+            Entry<WordTag,Integer> entry = (Entry) iter.next();
+            setOfWords.add(entry.getKey().getWord());
         }
-        printMap(expectationMap);
+
+        Map<WordTag,Float> expectationMap = new LinkedHashMap<WordTag,Float>();
+        for(Entry<WordTag,Integer> entry :taggedWords.entrySet()){
+            if(!"_RARE_".equals(entry.getKey().getTag())) {
+                Float expectationOfXgivenY = ((float) entry.getValue())/((float)tagMap.get(entry.getKey().getTag()));
+                expectationMap.put(entry.getKey(),expectationOfXgivenY);
+            }
+        }
+        //printMap(expectationMap);
+
+        Map<WordTag,Float> resultWordTags = new LinkedHashMap<WordTag,Float>();
+
+        Map<String,String> expectedTags = new LinkedHashMap<String,String>();
+
+        for(String word: setOfWords){
+
+            Map<Float,String> expToTagMap = new LinkedHashMap<Float,String>();
+            float expOfRareAndWord =  expectationMap.containsKey(new WordTag(word,"_RARE_")) ? expectationMap.get(new WordTag(word,"_RARE_")) : 0;
+            float expOfIGeneAndWord =  expectationMap.containsKey(new WordTag(word,"I-GENE")) ? expectationMap.get(new WordTag(word,"I-GENE")) : 0;
+            float expOfOAndWord =  expectationMap.containsKey(new WordTag(word,"O")) ? expectationMap.get(new WordTag(word,"O")) : 0;
+
+            expToTagMap.put(expOfRareAndWord,"_RARE_");
+            expToTagMap.put(expOfIGeneAndWord,"I-GENE");
+            expToTagMap.put(expOfOAndWord,"O");
+            float maxExpectation = Math.max(expOfRareAndWord,Math.max(expOfIGeneAndWord,expOfOAndWord));
+            resultWordTags.put(new WordTag(word, expToTagMap.get(maxExpectation)), Math.max(expOfOAndWord, expOfIGeneAndWord));
+            expectedTags.put(word,expToTagMap.get(maxExpectation));
+        }
+
+        //printMap(resultWordTags);
+
+        List<String> newWords = getContents("src/test/resources/gene.dev");
+        List<String> estimatedWords = new ArrayList<String>();
+        for(String newWord: newWords){
+            if(newWord != null && newWord.length() > 0){
+                String tag = expectedTags.containsKey(newWord) ? expectedTags.get(newWord) : "_RARE_";
+                estimatedWords.add(newWord + " " + tag);
+            } else {
+                estimatedWords.add("");
+            }
+
+        }
+        //printMap(estimatedWords);
+        assertEquals(newWords.size(),estimatedWords.size());
+        writeToFile(new File("src/test/resources/gene_dev.p1.out"),false,estimatedWords);
         return expectationMap;
     }
 
@@ -105,6 +152,31 @@ public class WordsTest {
         while(iter.hasNext()){
            Map.Entry entry = (Map.Entry) iter.next();
            LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
+        }
+    }
+
+    protected List<String> getContents(String fileLocation) throws IOException {
+        FileInputStream fin =  new FileInputStream(fileLocation);
+        BufferedReader myInput = new BufferedReader(new InputStreamReader(fin));
+        List<String> strings = new ArrayList<String>();
+        String thisLine;
+        while ((thisLine = myInput.readLine()) != null) {
+            strings.add(thisLine);
+        }
+        return strings;
+    }
+
+    protected void writeToFile(File file, boolean append,List<String> list) throws IOException {
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new java.io.FileWriter(file, append));
+            for(String estimatedWord: list){
+                bufferedWriter.write(estimatedWord);
+                bufferedWriter.newLine();
+            }
+        } finally {
+            bufferedWriter.flush();
+            bufferedWriter.close();
         }
     }
     

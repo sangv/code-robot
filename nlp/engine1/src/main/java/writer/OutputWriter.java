@@ -1,8 +1,7 @@
 package writer;
 
-import domain.WordTagCounts;
-
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This ${TYPE}
@@ -10,5 +9,6 @@ import java.io.IOException;
  * @author Sang Venkatraman
  */
 public interface OutputWriter {
-    void write(String fileLocation, WordTagCounts wordTagCounts) throws IOException;
+
+  void write(String location, boolean append, List<String> strings) throws IOException;
 }

@@ -1,6 +1,7 @@
 package reader;
 
 import domain.TaggedSentence;
+import domain.TaggedSentence.WordTag;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -22,14 +23,14 @@ public class FileBasedSentenceReader implements SentenceReader {
     public List<TaggedSentence> read(String location) throws IOException{
         List<TaggedSentence> sentences = new ArrayList<TaggedSentence>();
         List<String> input = getContents(location);
-        List<TaggedSentence.WordTag> wordTags = initSentences();
+        List<WordTag> wordTags = initSentences();
         for(String str: input){
             if(str == null || str.length() == 0) {
                 sentences.add(new TaggedSentence(completeSentences(wordTags)));
                 wordTags = initSentences();
             } else {
                 String[] splits = str.split(" ");
-                TaggedSentence.WordTag wordTag = new TaggedSentence.WordTag(splits[0],splits[1]);
+                WordTag wordTag = new WordTag(splits[0],splits[1]);
                 wordTags.add(wordTag);
             }
         }
@@ -37,7 +38,8 @@ public class FileBasedSentenceReader implements SentenceReader {
         return sentences;
     }
 
-    protected List<String> getContents(String fileLocation) throws IOException {
+    @Override
+    public List<String> getContents(String fileLocation) throws IOException {
         FileInputStream fin =  new FileInputStream(fileLocation);
         BufferedReader myInput = new BufferedReader(new InputStreamReader(fin));
         List<String> strings = new ArrayList<String>();
@@ -48,15 +50,15 @@ public class FileBasedSentenceReader implements SentenceReader {
         return strings;
     }
 
-    protected List<TaggedSentence.WordTag> initSentences(){
-        List<TaggedSentence.WordTag> wordTags = new LinkedList<TaggedSentence.WordTag>();
-        wordTags.add(new TaggedSentence.WordTag("None","*"));
-        wordTags.add(new TaggedSentence.WordTag("None","*"));
+    protected List<WordTag> initSentences(){
+        List<WordTag> wordTags = new LinkedList<WordTag>();
+        wordTags.add(new WordTag("None","*"));
+        wordTags.add(new WordTag("None","*"));
         return wordTags;
     }
 
-    protected List<TaggedSentence.WordTag> completeSentences(List<TaggedSentence.WordTag> wordTags){
-        wordTags.add(new TaggedSentence.WordTag("None","STOP"));
+    protected List<WordTag> completeSentences(List<WordTag> wordTags){
+        wordTags.add(new WordTag("None","STOP"));
         return wordTags;
     }
 }

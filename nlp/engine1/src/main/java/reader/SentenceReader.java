@@ -18,4 +18,6 @@ public interface SentenceReader {
      * @throws IOException
      */
     List<TaggedSentence> read(String location) throws IOException;
+
+    List<String> getContents(String fileLocation) throws IOException;
 }

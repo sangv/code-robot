@@ -1,10 +1,9 @@
 package writer;
 
-import domain.WordTagCounts;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This ${TYPE}
@@ -14,12 +13,8 @@ import java.io.IOException;
 public class FileOutputWriter implements OutputWriter {
 
     @Override
-    public void write(String fileLocation, WordTagCounts wordTagCounts) throws IOException {
-        writeToFile(new File(fileLocation),false,null);
-    }
-
-
-    protected void writeToFile(File file, boolean append,String... strings) throws IOException {
+    public void write(String location, boolean append, List<String> strings) throws IOException {
+        File file = new File(location);
         BufferedWriter bufferedWriter = null;
         try {
             bufferedWriter = new BufferedWriter(new java.io.FileWriter(file, append));

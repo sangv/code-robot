@@ -27,6 +27,10 @@ public class WordTagCounts {
 
     List<String> words = new ArrayList<String>();
 
+    List<String> tags = new ArrayList<String>();
+
+    List<String> wordTags = new ArrayList<String>();
+
     public Map<NGramTag, Integer> getThreeGramCountMap() {
         return threeGramCountMap;
     }
@@ -71,4 +75,11 @@ public class WordTagCounts {
         return words;
     }
 
+    public List<String> getWordTags() {
+        return wordTags;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
 }

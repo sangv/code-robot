@@ -68,22 +68,25 @@ public class WordsTest {
     @Test
     public void testReplaceLessFrequentWordTags() throws IOException {
         Map<TaggedSentence.WordTag,Integer> taggedWords = wordTagger.getWordTagCounts().getWordTagCountMap();
+        Map<String,Integer> wordCountMap = wordTagger.getWordTagCounts().getWordCountMap();
+
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
 
-        Map<WordTag,Integer> toBeReplacedWords = new LinkedHashMap<WordTag,Integer>();
+        Map<String,Integer> toBeReplacedWords = new LinkedHashMap<String,Integer>();
         Iterator<Entry<WordTag,Integer>> iter = taggedWords.entrySet().iterator();
         while(iter.hasNext()){
             Entry<WordTag,Integer> entry = iter.next();
             if(entry.getValue() < 5){
-               toBeReplacedWords.put(new WordTag(entry.getKey().getWord(),entry.getKey().getTag()),entry.getValue());
+               toBeReplacedWords.put(entry.getKey().getWord(),entry.getValue());
             }
         }
 
-        for(Entry<WordTag,Integer> entry :toBeReplacedWords.entrySet()){
-            taggedWords.remove(new WordTag(entry.getKey().getWord(),entry.getKey().getTag()));
-            taggedWords.put(new WordTag(entry.getKey().getWord(), "_RARE_"), entry.getValue());
-
+        for(Entry<String,Integer> entry :toBeReplacedWords.entrySet()){
+            taggedWords.remove(new WordTag(entry.getKey(),"I-GENE")); //removing all possible tags
+            taggedWords.remove(new WordTag(entry.getKey(),"O"));
+            taggedWords.put(new WordTag(entry.getKey(), "_RARE_"), entry.getValue());
         }
+        writeToFile(new File("src/test/resources/reduced_count.out"),false,wordTagger.getWordTagCounts().getWords());
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","_RARE_")));
         //printMap(wordTagger.getWordTagCounts().getTagCountMap());
         Integer iGeneTagCount = wordTagger.getWordTagCounts().getTagCountMap().get("I-GENE");
@@ -116,14 +119,14 @@ public class WordsTest {
         for(String word: setOfWords){
 
             Map<Float,String> expToTagMap = new LinkedHashMap<Float,String>();
-            float expOfRareAndWord =  expectationMap.containsKey(new WordTag(word,"_RARE_")) ? expectationMap.get(new WordTag(word,"_RARE_")) : 0;
+            //float expOfRareAndWord =  expectationMap.containsKey(new WordTag(word,"_RARE_")) ? expectationMap.get(new WordTag(word,"_RARE_")) : 0;
             float expOfIGeneAndWord =  expectationMap.containsKey(new WordTag(word,"I-GENE")) ? expectationMap.get(new WordTag(word,"I-GENE")) : 0;
             float expOfOAndWord =  expectationMap.containsKey(new WordTag(word,"O")) ? expectationMap.get(new WordTag(word,"O")) : 0;
 
-            expToTagMap.put(expOfRareAndWord,"_RARE_");
+            //expToTagMap.put(expOfRareAndWord,"_RARE_");
             expToTagMap.put(expOfIGeneAndWord,"I-GENE");
             expToTagMap.put(expOfOAndWord,"O");
-            float maxExpectation = Math.max(expOfRareAndWord,Math.max(expOfIGeneAndWord,expOfOAndWord));
+            float maxExpectation = Math.max(expOfIGeneAndWord,expOfOAndWord);
             resultWordTags.put(new WordTag(word, expToTagMap.get(maxExpectation)), Math.max(expOfOAndWord, expOfIGeneAndWord));
             expectedTags.put(word,expToTagMap.get(maxExpectation));
         }
@@ -179,6 +182,5 @@ public class WordsTest {
             bufferedWriter.close();
         }
     }
-    
     
 }

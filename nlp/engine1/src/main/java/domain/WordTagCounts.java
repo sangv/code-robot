@@ -1,6 +1,8 @@
 package domain;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,11 +17,15 @@ public class WordTagCounts {
 
     Map<String,Integer> tagCountMap = new LinkedHashMap<String, Integer>();
 
+    Map<String,Integer> wordCountMap = new LinkedHashMap<String, Integer>();
+
     Map<NGramTag,Integer> oneGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
 
     Map<NGramTag,Integer> twoGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
 
     Map<NGramTag,Integer> threeGramCountMap =  new LinkedHashMap<NGramTag, Integer>();
+
+    List<String> words = new ArrayList<String>();
 
     public Map<NGramTag, Integer> getThreeGramCountMap() {
         return threeGramCountMap;
@@ -56,4 +62,13 @@ public class WordTagCounts {
     public Map<String, Integer> getTagCountMap() {
         return tagCountMap;
     }
+
+    public Map<String, Integer> getWordCountMap() {
+        return wordCountMap;
+    }
+
+    public List<String> getWords() {
+        return words;
+    }
+
 }

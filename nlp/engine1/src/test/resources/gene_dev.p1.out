@@ -187,7 +187,7 @@ Src I-GENE
 homology I-GENE
 2 I-GENE
 ( O
-SH2 I-GENE
+SH2 O
 ) O
 and O
 SH3 I-GENE
@@ -293,7 +293,7 @@ the O
 HBx O
 - I-GENE
 induced O
-Sp1 I-GENE
+Sp1 O
 - I-GENE
 mediated O
 IGF I-GENE
@@ -315,7 +315,7 @@ PKC I-GENE
 expression O
 vector O
 increases O
-Sp1 I-GENE
+Sp1 O
 phosphorylation O
 and O
 P4 O
@@ -337,7 +337,7 @@ PKC I-GENE
 inhibitor I-GENE
 Go6976 _RARE_
 reduces O
-Sp1 I-GENE
+Sp1 O
 phosphorylation O
 , O
 P4 O
@@ -367,7 +367,7 @@ activation O
 by O
 U0126 O
 reduces O
-Sp1 I-GENE
+Sp1 O
 phosphorylation O
 , O
 P4 O
@@ -1134,7 +1134,7 @@ High O
 affinity O
 binding I-GENE
 of O
-NF I-GENE
+NF O
 - I-GENE
 1 I-GENE
 to O
@@ -1160,7 +1160,7 @@ protein I-GENE
 interactions O
 by O
 using O
-NF I-GENE
+NF O
 - I-GENE
 1 I-GENE
 DNA I-GENE
@@ -1190,7 +1190,7 @@ Substitutions O
 in O
 the O
 YFV _RARE_
-Ag I-GENE
+Ag O
 - I-GENE
 binding I-GENE
 region O
@@ -1214,7 +1214,7 @@ binding I-GENE
 of O
 peptide I-GENE
 - I-GENE
-Ag I-GENE
+Ag O
 in O
 the O
 class I-GENE
@@ -1578,7 +1578,7 @@ phosphorylation O
 of O
 p27 I-GENE
 by O
-MAPK I-GENE
+MAPK O
 enhanced O
 the O
 stability O
@@ -1620,7 +1620,7 @@ were O
 used O
 to O
 block O
-MAPK I-GENE
+MAPK O
 activation O
 . O
 
@@ -2119,7 +2119,7 @@ S I-GENE
 phase O
 entry O
 by O
-epidermal I-GENE
+epidermal O
 growth I-GENE
 factor I-GENE
 involves O
@@ -2150,10 +2150,10 @@ weekly O
 ( O
 TIW _RARE_
 ) O
-interferon I-GENE
+interferon O
 alfa O
 - I-GENE
-2b I-GENE
+2b O
 dose O
 ( O
 3 I-GENE
@@ -2170,7 +2170,7 @@ QW _RARE_
 peginterferon _RARE_
 alfa O
 - I-GENE
-2b I-GENE
+2b O
 ( O
 0 O
 . O
@@ -2413,7 +2413,7 @@ protein I-GENE
 kinase I-GENE
 a O
 , O
-phosphatidylinositol I-GENE
+phosphatidylinositol O
 3 I-GENE
 - I-GENE
 kinase I-GENE
@@ -2441,7 +2441,7 @@ HTLV O
 - I-GENE
 I I-GENE
 ) O
-Tax I-GENE
+Tax O
 is O
 a O
 potent O
@@ -2570,7 +2570,7 @@ cell O
 line O
 expressing O
 MEN O
-2A I-GENE
+2A O
 type I-GENE
 RET I-GENE
 , O
@@ -2579,7 +2579,7 @@ transcriptionally O
 active O
 RelA O
 ( O
-p65 I-GENE
+p65 O
 ) O
 in O
 the O
@@ -2645,7 +2645,7 @@ portion O
 . O
 
 Direct O
-superoxide I-GENE
+superoxide O
 scavenging O
 activity O
 of O
@@ -2804,7 +2804,7 @@ activation O
 Inhibition O
 of O
 constitutive O
-NF I-GENE
+NF O
 - I-GENE
 kappaB I-GENE
 activity O
@@ -3202,7 +3202,7 @@ in O
 vivo O
 role O
 of O
-p16 I-GENE
+p16 O
 . O
 7 O
 , O
@@ -3431,7 +3431,7 @@ correspond O
 to O
 " O
 isochore O
-H1 I-GENE
+H1 O
 " O
 and O
 the O
@@ -3532,7 +3532,7 @@ US O
 . O
 
 Eight O
-CAD I-GENE
+CAD O
 patients O
 who O
 were O
@@ -3677,7 +3677,7 @@ was O
 determined O
 using O
 the O
-creatine I-GENE
+creatine O
 kinase I-GENE
 integral O
 method O
@@ -3876,7 +3876,7 @@ markers O
 troponin O
 T I-GENE
 , O
-CK I-GENE
+CK O
 - I-GENE
 MB I-GENE
 mass O
@@ -3929,7 +3929,7 @@ POU I-GENE
 OCT O
 binding I-GENE
 ) O
-homeodomain I-GENE
+homeodomain O
 proteins I-GENE
 examined O
 by O
@@ -4219,7 +4219,7 @@ design O
 program O
 . O
 
-NF I-GENE
+NF O
 - I-GENE
 kappaB I-GENE
 pathway O
@@ -4315,7 +4315,7 @@ cells O
 showed O
 no O
 significant O
-proteinase I-GENE
+proteinase O
 activity O
 to O
 various O
@@ -4855,7 +4855,7 @@ activated I-GENE
 protein I-GENE
 kinase I-GENE
 ( O
-MAPK I-GENE
+MAPK O
 ) O
 kinase I-GENE
 ( O
@@ -5027,7 +5027,7 @@ Mre11 _RARE_
 Rad50 _RARE_
 . O
 
-APC I-GENE
+APC O
 - I-GENE
 resistance O
 was O
@@ -5440,7 +5440,7 @@ proliferation O
 mediated O
 by O
 the O
-IL I-GENE
+IL O
 - I-GENE
 2 I-GENE
 receptor I-GENE
@@ -5860,7 +5860,7 @@ derived O
 growth I-GENE
 factor I-GENE
 ( O
-PDGF I-GENE
+PDGF O
 ) O
 beta I-GENE
 - I-GENE
@@ -5872,7 +5872,7 @@ CCAAT I-GENE
 motif I-GENE
 , O
 and O
-NF I-GENE
+NF O
 - I-GENE
 Y I-GENE
 plays O
@@ -6312,7 +6312,7 @@ T I-GENE
 , O
 myoglobin I-GENE
 and O
-CK I-GENE
+CK O
 - I-GENE
 MB I-GENE
 mass O
@@ -6554,7 +6554,7 @@ F222W _RARE_
 : O
 W21F _RARE_
 rGST O
-A1 I-GENE
+A1 O
 - I-GENE
 1 I-GENE
 double O
@@ -6623,7 +6623,7 @@ labile O
 
 No O
 preferential O
-VH I-GENE
+VH O
 / I-GENE
 VL O
 - I-GENE
@@ -6749,7 +6749,7 @@ the O
 components O
 of O
 this O
-rel I-GENE
+rel O
 / I-GENE
 AP1 I-GENE
 cooperative O
@@ -6773,7 +6773,7 @@ in O
 a O
 decrease O
 of O
-IL I-GENE
+IL O
 - I-GENE
 2 I-GENE
 gene I-GENE
@@ -6828,7 +6828,7 @@ Elf _RARE_
 - I-GENE
 1 I-GENE
 and O
-PU I-GENE
+PU O
 . O
 1 I-GENE
 , O
@@ -7039,7 +7039,7 @@ Sec14 _RARE_
 , O
 the O
 major I-GENE
-phosphatidylinositol I-GENE
+phosphatidylinositol O
 transfer I-GENE
 protein I-GENE
 of O
@@ -7762,7 +7762,7 @@ suggested O
 that O
 the O
 tandem O
-SH2 I-GENE
+SH2 O
 domains I-GENE
 of O
 SHP2 O
@@ -7779,7 +7779,7 @@ which O
 the O
 N I-GENE
 - I-GENE
-SH2 I-GENE
+SH2 O
 domain I-GENE
 binds O
 to O
@@ -7794,7 +7794,7 @@ and O
 the O
 C I-GENE
 - I-GENE
-SH2 I-GENE
+SH2 O
 domain I-GENE
 binds O
 to O
@@ -8076,7 +8076,7 @@ the O
 C I-GENE
 domain I-GENE
 of O
-Rb I-GENE
+Rb O
 , O
 L901Q _RARE_
 , O
@@ -8088,7 +8088,7 @@ completely O
 abolishes O
 cdk4 O
 / I-GENE
-D1 I-GENE
+D1 O
 phosphorylation O
 of O
 the O
@@ -8408,7 +8408,7 @@ that O
 structure O
 and O
 involving O
-cyclin I-GENE
+cyclin O
 D3 O
 cause O
 the O
@@ -8527,7 +8527,7 @@ activated I-GENE
 , O
 but O
 not O
-EGF I-GENE
+EGF O
 - I-GENE
 activated I-GENE
 , O
@@ -8728,7 +8728,7 @@ adjuvant O
 IFN I-GENE
 alpha I-GENE
 - I-GENE
-2b I-GENE
+2b O
 to O
 measure O
 the O
@@ -8912,12 +8912,12 @@ binding I-GENE
 of O
 COUP I-GENE
 - I-GENE
-TF I-GENE
+TF O
 and O
 strong O
 binding I-GENE
 of O
-NF I-GENE
+NF O
 - I-GENE
 kappaB I-GENE
 . O
@@ -8976,7 +8976,7 @@ SHP I-GENE
 1 I-GENE
 , O
 a O
-SH2 I-GENE
+SH2 O
 domain I-GENE
 - I-GENE
 containing O
@@ -9079,7 +9079,7 @@ humanized O
 anti I-GENE
 - I-GENE
 FcgammaRI _RARE_
-mAb I-GENE
+mAb O
 H22 _RARE_
 with O
 eGFP _RARE_
@@ -9143,7 +9143,7 @@ prolongs O
 the O
 survival O
 of O
-H3 I-GENE
+H3 O
 patients O
 only O
 . O
@@ -9349,7 +9349,7 @@ therapeutic O
 trial O
 with O
 botulinum I-GENE
-toxin I-GENE
+toxin O
 injection O
 into O
 the O
@@ -9416,7 +9416,7 @@ shares O
 homology I-GENE
 with O
 other O
-retinoblastoma I-GENE
+retinoblastoma O
 - I-GENE
 binding I-GENE
 proteins I-GENE
@@ -9502,7 +9502,7 @@ E2 I-GENE
 and O
 Flat _RARE_
 ( O
-A2 I-GENE
+A2 O
 / I-GENE
 A3 O
 ). O
@@ -9645,7 +9645,7 @@ QWB _RARE_
 - I-GENE
 SA O
 and O
-SF I-GENE
+SF O
 - I-GENE
 36 O
 evaluating O
@@ -9824,7 +9824,7 @@ and O
 E I-GENE
 - I-GENE
 type I-GENE
-cyclin I-GENE
+cyclin O
 kinase I-GENE
 complexes I-GENE
 thought O
@@ -9845,7 +9845,7 @@ p27 I-GENE
 ( O
 Kip1 _RARE_
 ) O
-cyclin I-GENE
+cyclin O
 kinase I-GENE
 inhibitors O
 . O
@@ -9914,10 +9914,10 @@ c I-GENE
 - I-GENE
 sis O
 / I-GENE
-PDGF I-GENE
+PDGF O
 - I-GENE
 B I-GENE
-proto I-GENE
+proto O
 - I-GENE
 oncogene I-GENE
 in O
@@ -10067,7 +10067,7 @@ activity O
 was O
 capable O
 of O
-converting I-GENE
+converting O
 both O
 5 I-GENE
 - I-GENE
@@ -10176,10 +10176,10 @@ can O
 be O
 seen O
 with O
-interferon I-GENE
+interferon O
 alfa O
 - I-GENE
-2b I-GENE
+2b O
 - I-GENE
 associated I-GENE
 retinopathy O
@@ -10316,7 +10316,7 @@ homologies O
 with O
 the O
 diphtheria O
-toxin I-GENE
+toxin O
 repressor I-GENE
 . O
 
@@ -10359,7 +10359,7 @@ are O
 correlated O
 with O
 increased O
-collagen I-GENE
+collagen O
 gene I-GENE
 transcription I-GENE
 in O
@@ -10403,7 +10403,7 @@ the O
 21 O
 - I-GENE
 bp O
-enhancers I-GENE
+enhancers O
 increases O
 binding I-GENE
 of O
@@ -10428,7 +10428,7 @@ Stable O
 transfection O
 of O
 human I-GENE
-CHOP I-GENE
+CHOP O
 cDNA I-GENE
 into O
 mammary O
@@ -10436,7 +10436,7 @@ carcinoma O
 cells O
 demonstrated O
 that O
-CHOP I-GENE
+CHOP O
 functioned O
 not O
 as O
@@ -10460,7 +10460,7 @@ hGH I-GENE
 in O
 a O
 p38 I-GENE
-MAPK I-GENE
+MAPK O
 - I-GENE
 dependent I-GENE
 manner O
@@ -10505,7 +10505,7 @@ an O
 essential O
 role O
 in O
-NF I-GENE
+NF O
 - I-GENE
 kappaB I-GENE
 activation O
@@ -10586,7 +10586,7 @@ interleukin I-GENE
 receptor I-GENE
 antagonist O
 ( O
-IL I-GENE
+IL O
 - I-GENE
 1ra _RARE_
 ). O
@@ -10888,7 +10888,7 @@ activated I-GENE
 protein I-GENE
 kinase I-GENE
 ( O
-MAPK I-GENE
+MAPK O
 ) O
 pathway O
 activation O
@@ -10928,10 +10928,10 @@ estradiol O
 E2 I-GENE
 ) O
 or O
-parathyroid I-GENE
+parathyroid O
 hormone I-GENE
 ( O
-PTH I-GENE
+PTH O
 ) O
 to O
 improve O
@@ -11226,7 +11226,7 @@ multiple O
 contacts O
 with O
 the O
-alpha1 I-GENE
+alpha1 O
 and O
 alpha2 O
 helices O
@@ -11314,9 +11314,9 @@ repression O
 of O
 transcription I-GENE
 of O
-NF I-GENE
+NF O
 - I-GENE
-kappa I-GENE
+kappa O
 B I-GENE
 target O
 genes I-GENE
@@ -11461,7 +11461,7 @@ associated I-GENE
 with O
 elevated O
 serum I-GENE
-PTH I-GENE
+PTH O
 concentration O
 indicating O
 primary O
@@ -11532,7 +11532,7 @@ deletion O
 mutants I-GENE
 indicated O
 that O
-SF I-GENE
+SF O
 - I-GENE
 1 I-GENE
 acts O
@@ -11802,7 +11802,7 @@ for O
 the O
 repression O
 of O
-PTH I-GENE
+PTH O
 was O
 5 I-GENE
 '- O
@@ -12634,7 +12634,7 @@ factor I-GENE
 - I-GENE
 1 I-GENE
 ( O
-SF I-GENE
+SF O
 - I-GENE
 1 I-GENE
 ) O
@@ -12763,7 +12763,7 @@ rates O
 of O
 decline O
 of O
-CD4 I-GENE
+CD4 O
 cell O
 counts O
 during O
@@ -13019,7 +13019,7 @@ responsive I-GENE
 element I-GENE
 . O
 
-IL I-GENE
+IL O
 - I-GENE
 1beta I-GENE
 was O
@@ -13208,14 +13208,14 @@ requires O
 activation O
 of O
 the O
-cyclin I-GENE
+cyclin O
 - I-GENE
 dependent I-GENE
 kinase I-GENE
 Cdc28 I-GENE
 in O
 its O
-cyclin I-GENE
+cyclin O
 B I-GENE
 ( O
 Clb O
@@ -13520,7 +13520,7 @@ AP I-GENE
 1 I-GENE
 site I-GENE
 , O
-GATA I-GENE
+GATA O
 like I-GENE
 sequence I-GENE
 and O
@@ -13566,7 +13566,7 @@ therapy O
 0 O
 %) O
 and O
-IL I-GENE
+IL O
 - I-GENE
 12 O
 ( O
@@ -13672,7 +13672,7 @@ activation O
 mediated O
 by O
 other O
-GATA I-GENE
+GATA O
 factors I-GENE
 . O
 
@@ -13998,7 +13998,7 @@ showed O
 that O
 ERSF _RARE_
 including O
-NF I-GENE
+NF O
 - I-GENE
 Y I-GENE
 and O
@@ -14111,7 +14111,7 @@ dependent I-GENE
 phosphorylation O
 of O
 the O
-retinoblastoma I-GENE
+retinoblastoma O
 protein I-GENE
 . O
 
@@ -14162,7 +14162,7 @@ induced O
 in O
 response O
 to O
-IL I-GENE
+IL O
 - I-GENE
 2 I-GENE
 but O
@@ -14345,7 +14345,7 @@ single O
 - I-GENE
 copy O
 equid _RARE_
-LH I-GENE
+LH O
 / I-GENE
 CGbeta O
 gene I-GENE
@@ -14535,10 +14535,10 @@ drug O
 therapy O
 . O
 
-Anti I-GENE
+Anti O
 - I-GENE
 nucleolin O
-mAb I-GENE
+mAb O
 was O
 used O
 to O
@@ -14806,7 +14806,7 @@ Oct I-GENE
 - I-GENE
 1 I-GENE
 , O
-Sp1 I-GENE
+Sp1 O
 , O
 and O
 Sp3 I-GENE
@@ -14837,13 +14837,13 @@ anti I-GENE
 - I-GENE
 G I-GENE
 ( O
-D2 I-GENE
+D2 O
 ) O
 monoclonal I-GENE
 antibody I-GENE
 3F8 _RARE_
 and O
-granulocyte I-GENE
+granulocyte O
 - I-GENE
 macrophage I-GENE
 colony I-GENE

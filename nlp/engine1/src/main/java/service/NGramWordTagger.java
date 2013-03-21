@@ -56,10 +56,12 @@ public class NGramWordTagger implements WordTagger{
             for(int i=0; i< wordTags.length; i++){
 
                 //calculate count of word-tag combinations
-                if(!("*".equals(wordTags[i].getTag()) || "STOP".equals(wordTags[i].getTag()))){
+                if(!("*".equals(wordTags[i].getTag()) || "STOP".equals(wordTags[i].getTag()) || "_RARE_".equals(wordTags[i].getTag()))){
 
                     updateCountMap(wordTagCounts.getWordTagCountMap(),wordTags[i]);
                     updateCountMap(wordTagCounts.getTagCountMap(),wordTags[i].getTag());
+                    updateCountMap(wordTagCounts.getWordCountMap(),wordTags[i].getWord());
+                    wordTagCounts.getWords().add(wordTags[i].getWord());
 
                     NGramTag nGramTag = new NGramTag(1,wordTags[i].getTag());
                     updateCountMap(wordTagCounts.getOneGramCountMap(),nGramTag);
@@ -80,6 +82,7 @@ public class NGramWordTagger implements WordTagger{
                     }
                 }
             }
+            wordTagCounts.getWords().add("");
         }
     }
 

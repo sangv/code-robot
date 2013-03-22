@@ -1,9 +1,9 @@
 package service;
 
 import domain.NGramTag;
-import domain.TaggedSentence;
-import domain.TaggedSentence.WordTag;
-import domain.WordTagCounts;
+import domain.Sentence;
+import domain.Sentence.WordTag;
+import domain.TagResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reader.SentenceReader;
@@ -11,7 +11,6 @@ import writer.OutputWriter;
 
 import java.io.IOException;
 import java.util.*;
-
 import java.util.Map.Entry;
 
 /**
@@ -24,9 +23,9 @@ public class NGramWordTagger implements WordTagger{
 
     private OutputWriter outputWriter;
 
-    private WordTagCounts wordTagCounts;
+    private TagResults tagResults;
 
-    private List<TaggedSentence> sentences;
+    private List<Sentence> sentences;
 
     private static final Logger LOG = LoggerFactory.getLogger(NGramWordTagger.class);
 
@@ -40,58 +39,13 @@ public class NGramWordTagger implements WordTagger{
     public Map<NGramTag,Integer> getNGramCounts(int length){
         switch (length) {
             case 1:
-            return wordTagCounts.getOneGramCountMap();
+            return tagResults.getUnigramTagCountMap();
             case 2:
-            return wordTagCounts.getTwoGramCountMap();
+            return tagResults.getBigramTagCountMap();
             case 3:
-            return wordTagCounts.getThreeGramCountMap();
+            return tagResults.getTrigramTagCountMap();
         }
         return null;
-    }
-
-    protected void calculateNGramCounts(List<TaggedSentence> sentences){
-
-        LOG.info("Pre-calculating NGramCounts");
-
-        wordTagCounts = new WordTagCounts();
-        for(TaggedSentence sentence: sentences){
-
-            WordTag[] wordTags =  sentence.getWordTags().toArray(new WordTag[]{});
-            for(int i=0; i< wordTags.length; i++){
-
-                //calculate count of word-tag combinations
-                if(!("*".equals(wordTags[i].getTag()) || "STOP".equals(wordTags[i].getTag()) || "_RARE_".equals(wordTags[i].getTag()))){
-
-                    updateCountMap(wordTagCounts.getWordTagCountMap(),wordTags[i]);
-                    updateCountMap(wordTagCounts.getTagCountMap(),wordTags[i].getTag());
-                    updateCountMap(wordTagCounts.getWordCountMap(),wordTags[i].getWord());
-                    wordTagCounts.getWords().add(wordTags[i].getWord());
-                    wordTagCounts.getTags().add(wordTags[i].getTag());
-                    wordTagCounts.getWordTags().add(wordTags[i].getWord() + " " + wordTags[i].getTag());
-
-                    NGramTag nGramTag = new NGramTag(1,wordTags[i].getTag());
-                    updateCountMap(wordTagCounts.getOneGramCountMap(),nGramTag);
-                }
-
-                //calculate 2-gram tag counts
-                String tagBefore = wordTags[i].getTag();
-                if(i < wordTags.length - 1){
-                    String tagAfter = wordTags[i+1].getTag();
-                    NGramTag nGramTag = new NGramTag(2,tagBefore,tagAfter);
-                    updateCountMap(wordTagCounts.getTwoGramCountMap(),nGramTag);
-
-                    //calculate 3-gram tag counts
-                    if(i < wordTags.length - 2){
-                        String tagAfterAfter = wordTags[i+2].getTag();
-                        NGramTag threeGramTag = new NGramTag(3,tagBefore,tagAfter,tagAfterAfter);
-                        updateCountMap(wordTagCounts.getThreeGramCountMap(),threeGramTag);
-                    }
-                }
-            }
-            wordTagCounts.getWords().add("");
-            wordTagCounts.getTags().add("");
-            wordTagCounts.getWordTags().add("");
-        }
     }
 
     @Override
@@ -104,38 +58,6 @@ public class NGramWordTagger implements WordTagger{
         }
 
         return expectationMap;
-    }
-
-    @Override
-    public List<String> replaceLessFrequentWordTags(String outputFileLocation, Map<TaggedSentence.WordTag,Integer> taggedWords) throws Exception {
-
-        Map<String,Integer> wordCountMap = getWordTagCounts().getWordCountMap();
-
-        List<String> toBeReplacedWords = new ArrayList<String>();
-        Iterator<Entry<String,Integer>> iter = wordCountMap.entrySet().iterator();
-        while(iter.hasNext()){
-            Entry<String,Integer> entry = iter.next();
-            if(entry.getValue() < 5){
-                for(int j=0; j< entry.getValue(); j++){
-                    toBeReplacedWords.add(entry.getKey());
-                }
-            }
-        }
-
-        List<String> fixedWordsList = getWordTagCounts().getWords();
-        List<String> fixedWordTagsList = getWordTagCounts().getWordTags();
-        for(String toBeReplacedWord: toBeReplacedWords){
-            //don't have to worry about empty lines because they wont make it here
-            int index = fixedWordsList.indexOf(toBeReplacedWord);
-            String existingWordTag = fixedWordTagsList.get(index);
-            String[] existingWordAndTag = existingWordTag.split(" ");
-            String newWordTag = "_RARE_" + " " + existingWordAndTag[1];
-            fixedWordTagsList.remove(index);
-            fixedWordTagsList.add(index,newWordTag);
-        }
-
-        outputWriter.write(outputFileLocation, false, fixedWordTagsList);
-        return fixedWordsList;
     }
 
     @Override
@@ -187,13 +109,13 @@ public class NGramWordTagger implements WordTagger{
 
     @Override
     public void invalidate(){
-        wordTagCounts = new WordTagCounts();
-        sentences = null;
+        tagResults = new TagResults();
+        sentences = new ArrayList<Sentence>();
     }
 
     @Override
-    public WordTagCounts getWordTagCounts() {
-        return wordTagCounts;
+    public TagResults getTagResults() {
+        return tagResults;
     }
 
     @Override
@@ -204,6 +126,51 @@ public class NGramWordTagger implements WordTagger{
     @Override
     public void setOutputWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
+    }
+
+    protected void calculateNGramCounts(List<Sentence> sentences){
+
+        LOG.info("Pre-calculating NGramCounts");
+
+        tagResults = new TagResults();
+        for(Sentence sentence: sentences){
+
+            WordTag[] wordTags =  sentence.getWordTags().toArray(new WordTag[]{});
+            for(int i=0; i< wordTags.length; i++){
+
+                //calculate count of word-tag combinations
+                if(!("*".equals(wordTags[i].getTag()) || "STOP".equals(wordTags[i].getTag()) || "_RARE_".equals(wordTags[i].getTag()))){
+
+                    updateCountMap(tagResults.getWordTagCountMap(),wordTags[i]);
+                    updateCountMap(tagResults.getTagCountMap(),wordTags[i].getTag());
+                    updateCountMap(tagResults.getWordCountMap(),wordTags[i].getWord());
+                    tagResults.getWords().add(wordTags[i].getWord());
+                    tagResults.getTags().add(wordTags[i].getTag());
+                    tagResults.getWordTags().add(wordTags[i].getWord() + " " + wordTags[i].getTag());
+
+                    NGramTag nGramTag = new NGramTag(1,wordTags[i].getTag());
+                    updateCountMap(tagResults.getUnigramTagCountMap(), nGramTag);
+                }
+
+                //calculate 2-gram tag counts
+                String tagBefore = wordTags[i].getTag();
+                if(i < wordTags.length - 1){
+                    String tagAfter = wordTags[i+1].getTag();
+                    NGramTag nGramTag = new NGramTag(2,tagBefore,tagAfter);
+                    updateCountMap(tagResults.getBigramTagCountMap(),nGramTag);
+
+                    //calculate 3-gram tag counts
+                    if(i < wordTags.length - 2){
+                        String tagAfterAfter = wordTags[i+2].getTag();
+                        NGramTag threeGramTag = new NGramTag(3,tagBefore,tagAfter,tagAfterAfter);
+                        updateCountMap(tagResults.getTrigramTagCountMap(),threeGramTag);
+                    }
+                }
+            }
+            tagResults.getWords().add("");
+            tagResults.getTags().add("");
+            tagResults.getWordTags().add("");
+        }
     }
 
     protected synchronized void updateCountMap(Map map, Object key){

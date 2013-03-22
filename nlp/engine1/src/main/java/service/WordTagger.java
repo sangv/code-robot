@@ -1,8 +1,8 @@
 package service;
 
 import domain.NGramTag;
-import domain.TaggedSentence;
-import domain.WordTagCounts;
+import domain.Sentence;
+import domain.TagResults;
 import reader.SentenceReader;
 import writer.OutputWriter;
 
@@ -22,15 +22,14 @@ public interface WordTagger {
 
     void invalidate();
 
-    WordTagCounts getWordTagCounts();
+    TagResults getTagResults();
 
     void setSentenceReader(SentenceReader sentenceReader);
 
-    Map<TaggedSentence.WordTag,Float> calculateExpectations(Map<String, Integer> tagMap, Map<TaggedSentence.WordTag, Integer> taggedWords) throws IOException;
+    Map<Sentence.WordTag,Float> calculateExpectations(Map<String, Integer> tagMap, Map<Sentence.WordTag, Integer> taggedWords) throws IOException;
 
     void setOutputWriter(OutputWriter outputWriter);
 
-    List<String> estimate(String testFileLocation, String outputFileLocation, Map<TaggedSentence.WordTag, Integer> taggedWords, Map<TaggedSentence.WordTag, Float> expectationMap) throws IOException;
+    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Float> expectationMap) throws IOException;
 
-    List<String> replaceLessFrequentWordTags(String outputFileLocation, Map<TaggedSentence.WordTag,Integer> taggedWords) throws Exception;
 }

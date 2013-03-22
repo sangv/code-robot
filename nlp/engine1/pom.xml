@@ -30,7 +30,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
          <dependency>
              <groupId>ch.qos.logback</groupId>
              <artifactId>logback-classic</artifactId>
-             <version>1.0.6</version>
+             <version>1.0.7</version>
          </dependency>
           <dependency>
               <groupId>junit</groupId>

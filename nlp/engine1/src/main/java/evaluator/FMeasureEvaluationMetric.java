@@ -1,11 +1,9 @@
 package evaluator;
 
-import domain.TaggedSentence;
-import domain.TaggedSentence.WordTag;
+import domain.Sentence;
+import domain.Sentence.WordTag;
 import org.slf4j.Logger;
-import reader.FileBasedSentenceReader;
 import reader.SentenceReader;
-import writer.FileOutputWriter;
 import writer.OutputWriter;
 
 import java.io.IOException;
@@ -14,7 +12,7 @@ import java.util.List;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * This ${TYPE}
+ * This FMeasureEvaluationMetric compares the effectiveness of the algorithm in correctly estimating the expected outcome.
  *
  * @author Sang Venkatraman
  */
@@ -22,14 +20,14 @@ public class FMeasureEvaluationMetric  {
 
         private static final Logger LOG = getLogger(FMeasureEvaluationMetric.class);
 
-        private OutputWriter outputWriter = new FileOutputWriter();
+        private OutputWriter outputWriter;
 
-        private SentenceReader sentenceReader = new FileBasedSentenceReader();
+        private SentenceReader sentenceReader;
 
         public Double calculateMetric(String actualFileLocation, String expectedFileLocation, String positiveOutcome) throws IOException {
 
-            List<TaggedSentence> actualSentences = sentenceReader.read(actualFileLocation);
-            List<TaggedSentence> expectedSentences = sentenceReader.read(expectedFileLocation);
+            List<Sentence> actualSentences = sentenceReader.read(actualFileLocation);
+            List<Sentence> expectedSentences = sentenceReader.read(expectedFileLocation);
 
             if(actualSentences.size() != actualSentences.size()){
                 throw new RuntimeException("The content length of expected and actual word tags need to match.");
@@ -75,6 +73,11 @@ public class FMeasureEvaluationMetric  {
             return fmeasure;
         }
 
+    public void setOutputWriter(OutputWriter outputWriter) {
+        this.outputWriter = outputWriter;
+    }
 
-
+    public void setSentenceReader(SentenceReader sentenceReader) {
+        this.sentenceReader = sentenceReader;
+    }
 }

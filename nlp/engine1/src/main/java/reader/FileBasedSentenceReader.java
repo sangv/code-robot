@@ -1,7 +1,7 @@
 package reader;
 
-import domain.TaggedSentence;
-import domain.TaggedSentence.WordTag;
+import domain.Sentence;
+import domain.Sentence.WordTag;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -20,13 +20,13 @@ import java.util.List;
 public class FileBasedSentenceReader implements SentenceReader {
 
     @Override
-    public List<TaggedSentence> read(String location) throws IOException{
-        List<TaggedSentence> sentences = new ArrayList<TaggedSentence>();
+    public List<Sentence> read(String location) throws IOException{
+        List<Sentence> sentences = new ArrayList<Sentence>();
         List<String> input = getContents(location);
         List<WordTag> wordTags = initSentences();
         for(String str: input){
             if(str == null || str.length() == 0) {
-                sentences.add(new TaggedSentence(completeSentences(wordTags)));
+                sentences.add(new Sentence(completeSentences(wordTags)));
                 wordTags = initSentences();
             } else {
                 String[] splits = str.split(" ");
@@ -34,7 +34,7 @@ public class FileBasedSentenceReader implements SentenceReader {
                 wordTags.add(wordTag);
             }
         }
-        sentences.add(new TaggedSentence(completeSentences(wordTags)));//calling it once after for the last sentence
+        sentences.add(new Sentence(completeSentences(wordTags)));//calling it once after for the last sentence
         return sentences;
     }
 

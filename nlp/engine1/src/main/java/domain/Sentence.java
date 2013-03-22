@@ -3,18 +3,22 @@ package domain;
 import java.util.List;
 
 /**
- * This ${TYPE}
+ * The Sentence is an abstraction made up of wordTags.
  *
  * @author Sang Venkatraman
  */
-public class TaggedSentence {
+public class Sentence {
 
     List<WordTag> wordTags;
 
-    public TaggedSentence(List<WordTag> wordTags) {
+    public Sentence(List<WordTag> wordTags) {
         this.wordTags = wordTags;
     }
 
+    /**
+     * WordTag represents the combination of the word and its tag
+     *
+     */
     public static class WordTag {
 
         private String word;

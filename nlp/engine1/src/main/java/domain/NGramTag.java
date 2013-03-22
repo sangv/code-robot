@@ -3,6 +3,11 @@ package domain;
 import java.util.Arrays;
 
 /**
+ * NGramTag represents a tag given n other tags.
+ *
+ * When n = 0, it is a unigram tag
+ * when n=1, it is a bigram tag
+ * when n=2, it is a trigram tag
  *
  * @author Sang Venkatraman
  */

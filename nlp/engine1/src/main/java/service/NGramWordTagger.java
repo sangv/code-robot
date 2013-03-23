@@ -61,31 +61,10 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag,Integer> taggedWords, Map<WordTag,Float> expectationMap) throws IOException {
+    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag,Integer> taggedWords, Map<WordTag,Float> expectationMap, Map<WordTag,Integer> originalTaggedWords, Map<WordTag,Float> originalExpectationMap) throws IOException {
 
-        Set<String> setOfWords = new LinkedHashSet<String>();
-        Iterator iter = taggedWords.entrySet().iterator();
-        while(iter.hasNext()){
-            Entry<WordTag,Integer> entry = (Entry) iter.next();
-            setOfWords.add(entry.getKey().getWord());
-        }
-
-        Map<WordTag,Float> resultWordTags = new LinkedHashMap<WordTag,Float>();
-
-        Map<String,String> expectedTags = new LinkedHashMap<String,String>();
-
-        for(String word: setOfWords){
-
-            Map<Float,String> expToTagMap = new LinkedHashMap<Float,String>();
-            float expOfIGeneAndWord =  expectationMap.containsKey(new WordTag(word,"I-GENE")) ? expectationMap.get(new WordTag(word,"I-GENE")) : 0;
-            float expOfOAndWord =  expectationMap.containsKey(new WordTag(word,"O")) ? expectationMap.get(new WordTag(word,"O")) : 0;
-
-            expToTagMap.put(expOfIGeneAndWord,"I-GENE");
-            expToTagMap.put(expOfOAndWord,"O");
-            float maxExpectation = Math.max(expOfIGeneAndWord,expOfOAndWord);
-            resultWordTags.put(new WordTag(word, expToTagMap.get(maxExpectation)), Math.max(expOfOAndWord, expOfIGeneAndWord));
-            expectedTags.put(word,expToTagMap.get(maxExpectation));
-        }
+        Map<String,String> originalExpectedTags = calculateExpectedTagMap(originalTaggedWords,originalExpectationMap);
+        Map<String,String> expectedTags = calculateExpectedTagMap(taggedWords,expectationMap);
 
         List<String> newWords = sentenceReader.getContents(testFileLocation);
         List<String> estimatedWords = new ArrayList<String>();
@@ -95,7 +74,12 @@ public class NGramWordTagger implements WordTagger{
         LOG.info("Tag for rare words is: " + tagForRareWords);
         for(String newWord: newWords){
             if(newWord != null && newWord.length() > 0){
-                String tag = expectedTags.containsKey(newWord) ? expectedTags.get(newWord) : tagForRareWords;
+                String tag = null;
+                if(!expectedTags.containsKey(newWord)) {
+                    tag = originalExpectedTags.containsKey(newWord) ? originalExpectedTags.get(newWord) : tagForRareWords;
+                } else {
+                    tag = expectedTags.containsKey(newWord) ? expectedTags.get(newWord) : tagForRareWords;
+                }
                 estimatedWords.add(newWord + " " + tag);
             } else {
                 estimatedWords.add("");
@@ -126,6 +110,39 @@ public class NGramWordTagger implements WordTagger{
     @Override
     public void setOutputWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
+    }
+
+    @Override
+    public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception {
+
+        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
+        Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
+
+        List<String> toBeReplacedWords = new ArrayList<String>();
+        Iterator<Entry<String,Integer>> iter = wordCountMap.entrySet().iterator();
+        while(iter.hasNext()){
+            Entry<String,Integer> entry = iter.next();
+            if(entry.getValue() < 5){
+                for(int j=0; j< entry.getValue(); j++){
+                    toBeReplacedWords.add(entry.getKey());
+                }
+            }
+        }
+
+        List<String> fixedWordsList = tagResults.getWords();
+        List<String> fixedWordTagsList = tagResults.getWordTags();
+        for(String toBeReplacedWord: toBeReplacedWords){
+            //don't have to worry about empty lines because they wont make it here
+            int index = fixedWordsList.indexOf(toBeReplacedWord);
+            String existingWordTag = fixedWordTagsList.get(index);
+            String[] existingWordAndTag = existingWordTag.split(" ");
+            String newWordTag = "_RARE_" + " " + existingWordAndTag[1];
+            fixedWordTagsList.remove(index);
+            fixedWordTagsList.add(index,newWordTag);
+        }
+
+        outputWriter.write(outputFileLocation, false, fixedWordTagsList);
+        return fixedWordsList;
     }
 
     protected void calculateNGramCounts(List<Sentence> sentences){
@@ -176,6 +193,33 @@ public class NGramWordTagger implements WordTagger{
     protected synchronized void updateCountMap(Map map, Object key){
         int count = (Integer) (map.containsKey(key) ? map.get(key) : 0);
         map.put(key, ++count);
+    }
+
+    protected synchronized Map<String,String> calculateExpectedTagMap(Map<WordTag,Integer> taggedWords, Map<WordTag,Float> expectationMap){
+        Set<String> setOfWords = new LinkedHashSet<String>();
+        Iterator iter = taggedWords.entrySet().iterator();
+        while(iter.hasNext()){
+            Entry<WordTag,Integer> entry = (Entry) iter.next();
+            setOfWords.add(entry.getKey().getWord());
+        }
+
+        Map<WordTag,Float> resultWordTags = new LinkedHashMap<WordTag,Float>();
+
+        Map<String,String> expectedTags = new LinkedHashMap<String,String>();
+
+        for(String word: setOfWords){
+
+            Map<Float,String> expToTagMap = new LinkedHashMap<Float,String>();
+            float expOfIGeneAndWord =  expectationMap.containsKey(new WordTag(word,"I-GENE")) ? expectationMap.get(new WordTag(word,"I-GENE")) : 0;
+            float expOfOAndWord =  expectationMap.containsKey(new WordTag(word,"O")) ? expectationMap.get(new WordTag(word,"O")) : 0;
+
+            expToTagMap.put(expOfIGeneAndWord,"I-GENE");
+            expToTagMap.put(expOfOAndWord,"O");
+            float maxExpectation = Math.max(expOfIGeneAndWord,expOfOAndWord);
+            resultWordTags.put(new WordTag(word, expToTagMap.get(maxExpectation)), Math.max(expOfOAndWord, expOfIGeneAndWord));
+            expectedTags.put(word,expToTagMap.get(maxExpectation));
+        }
+        return expectedTags;
     }
 
 }

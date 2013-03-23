@@ -3,6 +3,7 @@ package service;
 import domain.NGramTag;
 import domain.Sentence;
 import domain.Sentence.WordTag;
+import domain.TagResults;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,12 +87,37 @@ public class WordTaggerTest {
     @Test
     public void generateUnigramCounts() throws IOException {
         wordTagger.init("src/test/resources/gene.train");
-        Map<Sentence.WordTag,Integer> taggedWords = wordTagger.getTagResults().getWordTagCountMap();
-        Integer iGeneTagCount = wordTagger.getTagResults().getTagCountMap().get("I-GENE");
-        Integer oTagCount = wordTagger.getTagResults().getTagCountMap().get("O");
-        Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(wordTagger.getTagResults().getTagCountMap(), taggedWords);
-        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
-        assertTrue(estimatedWordTags.contains("BACKGROUND O"));
+        TagResults originalTagResults = wordTagger.getTagResults();
+        Map<WordTag,Float> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
+        wordTagger.invalidate();
+
+        wordTagger.init("src/test/resources/reduced_count.out");
+        TagResults tagResults = wordTagger.getTagResults();
+        Map<Sentence.WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
+
+        Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
+        //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
+        //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
+        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+    }
+
+    @Test
+    public void testReplaceLessFrequentWordTags() throws Exception {
+        /*wordTagger.init("src/test/resources/gene.train");
+        TagResults tagResults = wordTagger.getTagResults();
+        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
+        assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
+        assertEquals(399996,tagResults.getWords().size());
+
+        wordTagger.replaceLessFrequentWordTags("src/test/resources/reduced_count.out",tagResults);*/
+
+        String reducedCountFileLocation = "src/test/resources/reduced_count.out";
+
+        List<String> replacedWordTagsList = sentenceReader.getContents(reducedCountFileLocation);
+        assertTrue(replacedWordTagsList.contains("M O"));
+        assertTrue(replacedWordTagsList.contains(". O"));
+        assertTrue(replacedWordTagsList.contains("_RARE_ O"));
+        outputWriter.write("src/test/resources/reduced_count.out", false, replacedWordTagsList);
     }
 
     public void printMap(Map map){

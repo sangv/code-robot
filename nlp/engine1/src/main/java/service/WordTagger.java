@@ -30,6 +30,7 @@ public interface WordTagger {
 
     void setOutputWriter(OutputWriter outputWriter);
 
-    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Float> expectationMap) throws IOException;
+    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Float> expectationMap, Map<Sentence.WordTag,Integer> originalTaggedWords, Map<Sentence.WordTag,Float> originalExpectationMap) throws IOException;
 
+    List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception;
 }

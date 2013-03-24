@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 public class WordTaggerTest {
@@ -100,6 +101,18 @@ public class WordTaggerTest {
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
         List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
         List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+    }
+
+    @Test
+    public void calculateQFunctions() throws IOException {
+        wordTagger.init("src/test/resources/gene.train");
+        TagResults tagResults = wordTagger.getTagResults();
+        printMap(tagResults.getTrigramTagCountMap());
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+        printMap(qFunction);
+        assertNotNull(qFunction);
+        assertEquals(20,qFunction.size());
     }
 
     @Test

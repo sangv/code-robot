@@ -107,6 +107,18 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
+    public Map<String,Float> calculateQFunction(TagResults tagResults){
+        Map<NGramTag,Integer> trigramCounts = tagResults.getTrigramTagCountMap();
+        Map<NGramTag,Integer> bigramCounts = tagResults.getBigramTagCountMap();
+        Map<String,Float> qFuncationResults = new LinkedHashMap<String,Float>();
+        calculateQFunction(new String[]{"I-GENE","O","*"},bigramCounts,trigramCounts,qFuncationResults);
+        calculateQFunction(new String[]{"O","I-GENE","*"},bigramCounts,trigramCounts,qFuncationResults);
+        calculateQFunction(new String[]{"STOP","I-GENE","O","*"},bigramCounts,trigramCounts,qFuncationResults);
+
+        return qFuncationResults;
+    }
+
+    @Override
     public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception {
 
         Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
@@ -214,6 +226,24 @@ public class NGramWordTagger implements WordTagger{
             expectedTags.put(word,expToTagMap.get(maxExpectation));
         }
         return expectedTags;
+    }
+
+    protected void calculateQFunction(String[] keyTags,Map<NGramTag,Integer> bigramCounts, Map<NGramTag,Integer> trigramCounts, Map<String,Float> qFunctionMap){
+
+            String tag =  keyTags[0];
+            for(int i=0; i< keyTags.length; i++){
+                for(int j=0; j< keyTags.length; j++){
+                    NGramTag bigramTag = new NGramTag(2,keyTags[i],keyTags[j]);
+                    NGramTag trigramTag = new NGramTag(3,keyTags[i],new String[]{keyTags[j],tag});
+                    int numerator = trigramCounts.containsKey(trigramTag) ? trigramCounts.get(trigramTag) : 0;
+                    int denominator = bigramCounts.containsKey(bigramTag) ? bigramCounts.get(bigramTag) : 0;
+                    float qFunction = denominator > 0? (float)numerator/(float)denominator : 0.0F;
+                    if(qFunction > 0) {
+                        qFunctionMap.put(tag + "Given" + keyTags[i] + "And" + keyTags[j],qFunction);
+                    }
+
+                }
+            }
     }
 
 }

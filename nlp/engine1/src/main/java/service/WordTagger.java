@@ -33,4 +33,6 @@ public interface WordTagger {
     List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Float> expectationMap, Map<Sentence.WordTag,Integer> originalTaggedWords, Map<Sentence.WordTag,Float> originalExpectationMaps) throws IOException;
 
     List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception;
+
+    Map<String,Float> calculateQFunction(TagResults tagResults);
 }

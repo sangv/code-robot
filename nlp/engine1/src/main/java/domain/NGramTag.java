@@ -58,4 +58,13 @@ public class NGramTag {
         result = 31 * result + (others != null ? Arrays.hashCode(others) : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "NGramTag{" +
+                "n=" + n +
+                ", tag='" + tag + '\'' +
+                ", others=" + (others == null ? null : Arrays.asList(others)) +
+                '}';
+    }
 }

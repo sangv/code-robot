@@ -1138,14 +1138,14 @@ NF I-GENE
 - I-GENE
 1 I-GENE
 to O
-PSE O
+PSE I-GENE
 - I-GENE
 B I-GENE
 , O
 but O
 not O
 to O
-PSE O
+PSE I-GENE
 - I-GENE
 A I-GENE
 , O
@@ -1779,7 +1779,7 @@ novel O
 myeloid O
 - I-GENE
 restricted O
-zebrafish O
+zebrafish I-GENE
 CCAAT I-GENE
 / I-GENE
 enhancer I-GENE
@@ -3051,7 +3051,7 @@ hOGG1 I-GENE
 and O
 APE I-GENE
 / I-GENE
-ref O
+ref I-GENE
 - I-GENE
 1 I-GENE
 ) O
@@ -4665,7 +4665,7 @@ regions O
 . O
 
 The O
-binary O
+binary I-GENE
 and O
 tertiary O
 combinations O
@@ -5333,7 +5333,7 @@ uptake O
 of O
 maize I-GENE
 ( O
-Zea O
+Zea I-GENE
 mays I-GENE
 L I-GENE
 .) O
@@ -6070,7 +6070,7 @@ blind O
 therapeutic O
 doses O
 , O
-Tg O
+Tg I-GENE
 - I-GENE
 off O
 values O
@@ -6109,7 +6109,7 @@ data O
 indicate O
 that O
 the O
-Pc O
+Pc I-GENE
 protein I-GENE
 M33 I-GENE
 does O
@@ -7696,7 +7696,7 @@ heterologous O
 promoter I-GENE
 construct I-GENE
 , O
-OA O
+OA I-GENE
 induction O
 was O
 dependent I-GENE
@@ -8363,7 +8363,7 @@ terminal I-GENE
 region O
 and O
 five O
-C2H2 O
+C2H2 I-GENE
 - I-GENE
 type I-GENE
 zinc I-GENE
@@ -9591,7 +9591,7 @@ group O
 ( O
 n O
 = O
-109 O
+109 I-GENE
 ) O
 who O
 provided O
@@ -10716,7 +10716,7 @@ two O
 - I-GENE
 domain I-GENE
 prokaryotic I-GENE
-betagamma O
+betagamma I-GENE
 - I-GENE
 crystallin I-GENE
 fold O
@@ -11861,7 +11861,7 @@ A I-GENE
 cDNA I-GENE
 clone O
 encoding O
-C2H2 O
+C2H2 I-GENE
 - I-GENE
 type I-GENE
 zinc I-GENE
@@ -12561,7 +12561,7 @@ recognition I-GENE
 of O
 the O
 bxd I-GENE
-PRE O
+PRE I-GENE
 by O
 d O
 ( O
@@ -14077,7 +14077,7 @@ flanking O
 region O
 of O
 the O
-pea O
+pea I-GENE
 33RNP I-GENE
 gene I-GENE
 . O

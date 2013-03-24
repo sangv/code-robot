@@ -98,7 +98,8 @@ public class WordTaggerTest {
         Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
         //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
-        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
     }
 
     @Test

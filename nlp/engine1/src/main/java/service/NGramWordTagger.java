@@ -121,34 +121,24 @@ public class NGramWordTagger implements WordTagger{
     @Override
     public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception {
 
-        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
-        Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
-
-        List<String> toBeReplacedWords = new ArrayList<String>();
-        Iterator<Entry<String,Integer>> iter = wordCountMap.entrySet().iterator();
-        while(iter.hasNext()){
-            Entry<String,Integer> entry = iter.next();
-            if(entry.getValue() < 5){
-                for(int j=0; j< entry.getValue(); j++){
-                    toBeReplacedWords.add(entry.getKey());
-                }
-            }
-        }
-
+        List<String> toBeReplacedWords = getLowOccurenceWords(tagResults);
         List<String> fixedWordsList = tagResults.getWords();
         List<String> fixedWordTagsList = tagResults.getWordTags();
+
+        List<String> newWordTagsList = new ArrayList<String>();
+        for(String wordTag: fixedWordTagsList){
+            newWordTagsList.add(wordTag);
+        }
+
         for(String toBeReplacedWord: toBeReplacedWords){
             //don't have to worry about empty lines because they wont make it here
             int index = fixedWordsList.indexOf(toBeReplacedWord);
-            String existingWordTag = fixedWordTagsList.get(index);
-            String[] existingWordAndTag = existingWordTag.split(" ");
-            String newWordTag = "_RARE_" + " " + existingWordAndTag[1];
-            fixedWordTagsList.remove(index);
-            fixedWordTagsList.add(index,newWordTag);
+            fixedWordsList.set(index,"_RARE_");
+            newWordTagsList.set(index,"_RARE_" + " " + fixedWordTagsList.get(index).split(" ")[1]);
         }
 
-        outputWriter.write(outputFileLocation, false, fixedWordTagsList);
-        return fixedWordsList;
+        outputWriter.write(outputFileLocation, false, newWordTagsList);
+        return newWordTagsList;
     }
 
     protected void calculateNGramCounts(List<Sentence> sentences){
@@ -244,6 +234,29 @@ public class NGramWordTagger implements WordTagger{
 
                 }
             }
+    }
+
+    @Override
+    public List<String> getLowOccurenceWords(TagResults tagResults){
+        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
+        Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
+        Integer countOfRareAndIGene = 0;
+        Integer countOfRareAndO = 0;
+        List<String> toBeReplacedWords = new ArrayList<String>();
+        Iterator<Entry<String,Integer>> iter = wordCountMap.entrySet().iterator();
+        while(iter.hasNext()){
+            Entry<String,Integer> entry = iter.next();
+            if(entry.getValue() < 5){
+                for(int j=0; j< entry.getValue(); j++){
+                    toBeReplacedWords.add(entry.getKey());
+                }
+                int incrementIGeneBy = taggedWords.containsKey(new WordTag(entry.getKey(),"I-GENE")) ? taggedWords.get(new WordTag(entry.getKey(),"I-GENE")):0;
+                countOfRareAndIGene = countOfRareAndIGene+incrementIGeneBy;
+                int incrementOBy = taggedWords.containsKey(new WordTag(entry.getKey(),"O")) ? taggedWords.get(new WordTag(entry.getKey(),"O")):0;
+                countOfRareAndO = countOfRareAndO + incrementOBy;
+            }
+        }
+        return toBeReplacedWords;
     }
 
 }

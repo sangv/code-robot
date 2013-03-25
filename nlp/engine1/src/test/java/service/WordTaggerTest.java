@@ -6,6 +6,7 @@ import domain.Sentence.WordTag;
 import domain.TagResults;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +95,7 @@ public class WordTaggerTest {
 
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
+        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
         Map<Sentence.WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
 
         Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
@@ -104,26 +106,63 @@ public class WordTaggerTest {
     }
 
     @Test
+    @Ignore
     public void calculateQFunctions() throws IOException {
-        wordTagger.init("src/test/resources/gene.train");
+
+        wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
-        printMap(tagResults.getTrigramTagCountMap());
+        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
+        wordTagger.init("src/test/resources/gene.train");
+        TagResults originalTagResults = wordTagger.getTagResults();
+
+        /*
+
+k = 0 U = 0 V = 1
+Calculating Pi[0, *, *] * q(1|*, *) * e(STAT5A | O)
+Taken max probability = 0.004527456817631497
+π(0,∗,∗)=1
+The string "STAT5A" does not occur in the training data (there are close matches with different capitalization), so this gets treated as a rare word. The counts I have for rare words and O tags are:
+
+28781 WORDTAG O _RARE_
+345128 1-GRAM O
+13796 2-GRAM * *
+13047 3-GRAM * * O
+From that I get:
+
+q(O|∗,∗) = 13047/13796 = 0.945709
+
+e(_RARE_|O) = 28781/345128 = 0.083392
+
+π(1,∗,O) = 1 * 0.945709 * 0.83392 = 0.078865
+
+         */
+
+
+        Map<WordTag,Float> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
+        wordTagger.invalidate();
+
+        printMap(originalTagResults.getTrigramTagCountMap());
         System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+        Map<String,Float> qFunction = wordTagger.calculateQFunction(originalTagResults);
         printMap(qFunction);
         assertNotNull(qFunction);
         assertEquals(20,qFunction.size());
+
+
+        List<String> rareWords = wordTagger.getLowOccurenceWords(originalTagResults);
+        wordTagger.init("src/test/resources/gene.dev_one");
     }
 
+    @Ignore
     @Test
     public void testReplaceLessFrequentWordTags() throws Exception {
-        /*wordTagger.init("src/test/resources/gene.train");
+        wordTagger.init("src/test/resources/gene.train");
         TagResults tagResults = wordTagger.getTagResults();
         Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
         assertEquals(399996,tagResults.getWords().size());
 
-        wordTagger.replaceLessFrequentWordTags("src/test/resources/reduced_count.out",tagResults);*/
+        List<String> reducedCountWords = wordTagger.replaceLessFrequentWordTags("src/test/resources/reduced_count.out",tagResults);
 
         String reducedCountFileLocation = "src/test/resources/reduced_count.out";
 

@@ -35,4 +35,6 @@ public interface WordTagger {
     List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception;
 
     Map<String,Float> calculateQFunction(TagResults tagResults);
+
+    List<String> getLowOccurenceWords(TagResults tagResults);
 }

@@ -1,7 +1,6 @@
 package evaluator;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import reader.FileBasedSentenceReader;
 import writer.FileOutputWriter;
@@ -27,7 +26,6 @@ public class EvaluatorTest {
     }
 
     @Test
-    @Ignore
     public void evaluate() throws IOException {
         assertEquals(1.0D, evaluator.calculateMetric("src/test/resources/gene.key.copy", "src/test/resources/gene.key", "I-GENE"));
         assertEquals(0.5581936685288642,evaluator.calculateMetric("src/test/resources/gene_dev.p1.fullcount.out","src/test/resources/gene.key","I-GENE"));

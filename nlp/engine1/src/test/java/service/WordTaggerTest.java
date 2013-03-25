@@ -101,21 +101,19 @@ public class WordTaggerTest {
         Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
         //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
-        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
-        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
     }
 
     @Test
-    @Ignore
     public void calculateQFunctions() throws IOException {
 
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
-        wordTagger.init("src/test/resources/gene.train");
-        TagResults originalTagResults = wordTagger.getTagResults();
 
-        /*
+
+         /*
 
 k = 0 U = 0 V = 1
 Calculating Pi[0, *, *] * q(1|*, *) * e(STAT5A | O)
@@ -137,20 +135,22 @@ e(_RARE_|O) = 28781/345128 = 0.083392
 
          */
 
-
-        Map<WordTag,Float> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
-        wordTagger.invalidate();
-
-        printMap(originalTagResults.getTrigramTagCountMap());
         System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        Map<String,Float> qFunction = wordTagger.calculateQFunction(originalTagResults);
+        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
         printMap(qFunction);
         assertNotNull(qFunction);
-        assertEquals(20,qFunction.size());
+        assertEquals(21,qFunction.size());
+        String[] tags = new String[]{"O","*","*"};
 
+        assertEquals(0.9456404F, qFunction.get(tags[0] + "Given" + tags[1] + "And" + tags[2]));
+        WordTag rareAndOWordTag = new WordTag("_RARE_","O");
+        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(rareAndOWordTag));
+        assertEquals(new Integer(345128),tagResults.getTagCountMap().get("O"));
+        float expectationOfRAREGivenO =  (float)tagResults.getWordTagCountMap().get(rareAndOWordTag)/(float)tagResults.getTagCountMap().get("O");
+        assertEquals(0.08339225F,expectationOfRAREGivenO);
+        int k=0, u=0, v=1;
+        assertEquals(0.078859076F,qFunction.get(tags[0] + "Given" + tags[1] + "And" + tags[2])*expectationOfRAREGivenO);
 
-        List<String> rareWords = wordTagger.getLowOccurenceWords(originalTagResults);
-        wordTagger.init("src/test/resources/gene.dev_one");
     }
 
     @Ignore

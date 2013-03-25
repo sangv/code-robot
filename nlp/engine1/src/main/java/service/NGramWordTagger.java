@@ -61,9 +61,10 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag,Float> expectationMap, Map<WordTag,Integer> originalTaggedWords, Map<WordTag,Float> originalExpectationMap) throws IOException {
+    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag,Integer> taggedWords, Map<WordTag,Float> expectationMap, Map<WordTag,Integer> originalTaggedWords, Map<WordTag,Float> originalExpectationMap) throws IOException {
 
         Map<String,String> originalExpectedTags = calculateExpectedTagMap(originalTaggedWords,originalExpectationMap);
+        Map<String,String> expectedTags = calculateExpectedTagMap(taggedWords,expectationMap);
 
         List<String> newWords = sentenceReader.getContents(testFileLocation);
         List<String> estimatedWords = new ArrayList<String>();
@@ -73,7 +74,7 @@ public class NGramWordTagger implements WordTagger{
         LOG.info("Tag for rare words is: " + tagForRareWords);
         for(String newWord: newWords){
             if(newWord != null && newWord.length() > 0){
-                String tag = originalExpectedTags.containsKey(newWord) ? originalExpectedTags.get(newWord) :tagForRareWords;
+                String tag = expectedTags.containsKey(newWord) ? originalExpectedTags.get(newWord) :tagForRareWords;
                 estimatedWords.add(newWord + " " + tag);
             } else {
                 estimatedWords.add("");

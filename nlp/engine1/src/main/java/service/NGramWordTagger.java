@@ -86,6 +86,23 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
+    public List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Float> qFunction, Map<WordTag, Float> expectationMap) throws IOException {
+
+        List<String> estimatedWords = new ArrayList<String>();
+
+        List<List<String>> sentences = sentenceReader.readSentences(testFileLocation);
+        for (List<String> sentence : sentences){
+              String[] words = sentence.toArray(new String[]{});
+              estimatedWords.addAll(calculateViterbiEstimates(words,qFunction,expectationMap));
+              estimatedWords.add("");
+        }
+
+
+        outputWriter.write(outputFileLocation,false,estimatedWords);
+        return estimatedWords;
+    }
+
+    @Override
     public void invalidate(){
         tagResults = new TagResults();
         sentences = new ArrayList<Sentence>();
@@ -110,12 +127,12 @@ public class NGramWordTagger implements WordTagger{
     public Map<String,Float> calculateQFunction(TagResults tagResults){
         Map<NGramTag,Integer> trigramCounts = tagResults.getTrigramTagCountMap();
         Map<NGramTag,Integer> bigramCounts = tagResults.getBigramTagCountMap();
-        Map<String,Float> qFuncationResults = new LinkedHashMap<String,Float>();
-        calculateQFunction(new String[]{"I-GENE","O","*"},bigramCounts,trigramCounts,qFuncationResults);
-        calculateQFunction(new String[]{"O","I-GENE","*"},bigramCounts,trigramCounts,qFuncationResults);
-        calculateQFunction(new String[]{"STOP","I-GENE","O","*"},bigramCounts,trigramCounts,qFuncationResults);
+        Map<String,Float> qFunctionResults = new LinkedHashMap<String,Float>();
+        calculateQFunction(new String[]{"I-GENE","O","*"},bigramCounts,trigramCounts,qFunctionResults);
+        calculateQFunction(new String[]{"O","I-GENE","*"},bigramCounts,trigramCounts,qFunctionResults);
+        calculateQFunction(new String[]{"STOP","I-GENE","O","*"},bigramCounts,trigramCounts,qFunctionResults);
 
-        return qFuncationResults;
+        return qFunctionResults;
     }
 
     @Override
@@ -257,6 +274,95 @@ public class NGramWordTagger implements WordTagger{
             }
         }
         return toBeReplacedWords;
+    }
+
+    List<String> calculateViterbiEstimates(String[] words, Map<String, Float> qFunction, Map<WordTag, Float> expectationMap){
+
+        Map<String, Float> piMap = calculatePiMap(words,qFunction,expectationMap);
+
+        Map<Integer,String> maxBackPointer = new LinkedHashMap<Integer,String>();
+
+        for(int index=1; index<=words.length; index++){
+            String highestTag = "";
+            float currentMax = 0.0F;
+            for(String key:piMap.keySet()){
+                if(key.startsWith("pi("+index)){
+                    if(piMap.get(key) >= currentMax){
+                        currentMax = piMap.get(key);
+                        String[] split = key.split(",");
+                        maxBackPointer.put(index,split[2].replace(")",""));
+                    }
+                }
+            }
+        }
+
+        Map<String,Float> endMap = new LinkedHashMap<String,Float>();
+        String[] tags = {"O","I-GENE"};
+        for(int i=0; i< tags.length; i++){
+            for(int j=0; j<tags.length; j++){
+                String lookupKey = "pi(3,"+tags[i]+","+tags[j]+")";
+                Float piValue = piMap.containsKey(lookupKey)?piMap.get(lookupKey):0.0F;
+                String qKey = "STOP" + "Given" + tags[i] + "And" + tags[j];
+                float qValue = qFunction.containsKey(qKey)? qFunction.get(qKey) : 0.0F;
+                endMap.put(new String(tags[i] + "," + tags[j]),piValue*qValue);
+            }
+        }
+
+        List<String> estimatedWords = new ArrayList<String>();
+        int index = 0;
+        for(Entry entry: maxBackPointer.entrySet()){
+            //LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
+            estimatedWords.add(index,words[index] + " " + maxBackPointer.get(index+1));
+            index++;
+        }
+        return estimatedWords;
+    }
+
+    protected Map<String, Float> calculatePiMap(String[] words, Map<String, Float> qFunction, Map<WordTag, Float> expectationMap){
+
+        Map<String, Float> piMap = new LinkedHashMap<String,Float>();
+        piMap.put("pi(0,*,*)",1.0F);
+
+
+        for(int k=1; k<=words.length; k++){
+            if(k == 1){
+                String[][] tagsArray = new String[][]{{"*","*","O"}, {"*","*","I-GENE"}};
+                for(String[] tagArray: tagsArray){
+                    String key = "pi("+k+","+tagArray[1]+","+tagArray[2]+")";
+                    WordTag wordTag = new WordTag(words[k-1],tagArray[2]);
+                    float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tagArray[2]));
+                    piMap.put(key,piMap.get("pi(0,*,*)")*qFunction.get(tagArray[2] + "Given" + tagArray[0] + "And" + tagArray[1])*expectation);
+                }
+            } else if(k==2) {
+                String[] tags = {"O","I-GENE"};
+                for(int u=0; u < tags.length; u++){
+                    for(int v=0; v<tags.length; v++){
+                        String key = "pi("+k+","+tags[u]+","+tags[v]+")";
+                        WordTag wordTag = new WordTag(words[k-1],tags[v]);
+                        float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
+                        piMap.put(key,piMap.get("pi(1,*,"+tags[u]+")")*qFunction.get(tags[v] + "Given" + "*" + "And" + tags[u])*expectation);
+                    }
+                }
+            } else {
+                String[] tags = {"O","I-GENE"};
+                //List<Float> results = new ArrayList<Float>();
+                for(int u=0; u < tags.length; u++){
+                    for(int v=0; v<tags.length; v++){
+                        String key = "pi("+k+","+tags[u]+","+tags[v]+")";
+                        WordTag wordTag = new WordTag(words[k-1],tags[v]);
+                        float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
+                        float result1 = piMap.get("pi("+ new Integer(k-1) +","+tags[0]+"," + tags[u]+ ")")*qFunction.get(tags[v] + "Given" + tags[0] + "And" + tags[u])*expectation;
+                        float result2 = piMap.get("pi("+ new Integer(k-1) +","+tags[1]+"," + tags[u]+ ")")*qFunction.get(tags[v] + "Given" + tags[1] + "And" + tags[u])*expectation;
+                        Map<Float,String> localTagMap = new HashMap<Float,String>();
+                        localTagMap.put(result1,tags[0]);
+                        localTagMap.put(result2,tags[1]);
+                        piMap.put(key,Math.max(result1,result2));
+                    }
+                }
+            }
+        }
+
+        return piMap;
     }
 
 }

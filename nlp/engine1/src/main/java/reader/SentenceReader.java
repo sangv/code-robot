@@ -22,4 +22,6 @@ public interface SentenceReader {
     List<Sentence> read(String location) throws IOException;
 
     List<String> getContents(String fileLocation) throws IOException;
+
+    List<List<String>> readSentences(String location) throws IOException;
 }

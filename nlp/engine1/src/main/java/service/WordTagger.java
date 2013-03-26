@@ -37,4 +37,6 @@ public interface WordTagger {
     Map<String,Float> calculateQFunction(TagResults tagResults);
 
     List<String> getLowOccurenceWords(TagResults tagResults);
+
+    List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Float> qFunction, Map<Sentence.WordTag, Float> expectationMap) throws IOException;
 }

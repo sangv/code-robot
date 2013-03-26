@@ -39,6 +39,23 @@ public class FileBasedSentenceReader implements SentenceReader {
     }
 
     @Override
+    public List<List<String>> readSentences(String location) throws IOException{
+        List<List<String>> sentences = new ArrayList<List<String>>();
+        List<String> input = getContents(location);
+        List<String> sentence = new ArrayList<String>();
+        for(String str: input){
+            if(str == null || str.length() == 0) {
+                sentences.add(sentence);
+                sentence = new ArrayList<String>();
+            } else {
+                sentence.add(str);
+            }
+        }
+        sentences.add(sentence);//calling it once after for the last sentence
+        return sentences;
+    }
+
+    @Override
     public List<String> getContents(String fileLocation) throws IOException {
         FileInputStream fin =  new FileInputStream(fileLocation);
         BufferedReader myInput = new BufferedReader(new InputStreamReader(fin));

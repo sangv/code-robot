@@ -17,6 +17,7 @@ import writer.OutputWriter;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,8 +102,8 @@ public class WordTaggerTest {
         Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
         //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
-        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
-        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap,originalTagResults.getWordTagCountMap(),originalExpectationsMap);
+        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
+        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap);
     }
 
     @Test
@@ -110,46 +111,133 @@ public class WordTaggerTest {
 
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
+        Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
-
-
-         /*
-
-k = 0 U = 0 V = 1
-Calculating Pi[0, *, *] * q(1|*, *) * e(STAT5A | O)
-Taken max probability = 0.004527456817631497
-π(0,∗,∗)=1
-The string "STAT5A" does not occur in the training data (there are close matches with different capitalization), so this gets treated as a rare word. The counts I have for rare words and O tags are:
-
-28781 WORDTAG O _RARE_
-345128 1-GRAM O
-13796 2-GRAM * *
-13047 3-GRAM * * O
-From that I get:
-
-q(O|∗,∗) = 13047/13796 = 0.945709
-
-e(_RARE_|O) = 28781/345128 = 0.083392
-
-π(1,∗,O) = 1 * 0.945709 * 0.83392 = 0.078865
-
-         */
 
         System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
         Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
         printMap(qFunction);
         assertNotNull(qFunction);
         assertEquals(21,qFunction.size());
-        String[] tags = new String[]{"O","*","*"};
+        String[] existingTags = new String[]{"O","*","*"};
 
-        assertEquals(0.9456404F, qFunction.get(tags[0] + "Given" + tags[1] + "And" + tags[2]));
-        WordTag rareAndOWordTag = new WordTag("_RARE_","O");
-        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(rareAndOWordTag));
+
+        WordTag rareWithTagO = new WordTag("_RARE_","O");
+
+        float expectationOfRAREGivenO =  (float)tagResults.getWordTagCountMap().get(rareWithTagO)/(float)tagResults.getTagCountMap().get("O");
+        assertEquals(0.9456404F, qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2]));
+
+        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(rareWithTagO));
         assertEquals(new Integer(345128),tagResults.getTagCountMap().get("O"));
-        float expectationOfRAREGivenO =  (float)tagResults.getWordTagCountMap().get(rareAndOWordTag)/(float)tagResults.getTagCountMap().get("O");
-        assertEquals(0.08339225F,expectationOfRAREGivenO);
-        int k=0, u=0, v=1;
-        assertEquals(0.078859076F,qFunction.get(tags[0] + "Given" + tags[1] + "And" + tags[2])*expectationOfRAREGivenO);
+
+        assertEquals(0.08339225F,expectationMap.get(rareWithTagO));
+
+        Map<String, Float> piMap = new LinkedHashMap<String,Float>();
+        piMap.put("pi(0,*,*)",1.0F);
+        assertEquals(0.078859076F,piMap.get("pi(0,*,*)")*qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2])*expectationOfRAREGivenO);
+    }
+
+    @Test
+    public void testViterbiAlgorithm() throws Exception {
+
+        wordTagger.init("src/test/resources/reduced_count.out");
+        TagResults tagResults = wordTagger.getTagResults();
+        Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
+        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+
+        Map<String, Float> piMap = new LinkedHashMap<String,Float>();
+        piMap.put("pi(0,*,*)",1.0F);
+
+        List<String> sentence = sentenceReader.getContents("src/test/resources/gene.dev_one");
+        assertEquals(23,sentence.size());
+        String[] words = sentence.subList(0,3).toArray(new String[]{});
+
+        /*pi(2,I-GENE,O) = 1.98251948938e-06, argmax = *
+
+        prob = 8.72732885782e-07, pi(1,*,O) = 0.0788647918553, q(I-GENE|*,O) = 0.0454510615467, e(mutations|I-GENE) = 0.000243474873393
+
+        pi(2,O,I-GENE) = 8.72732885782e-07, argmax = *
+
+        prob = 3.27105462354e-05, pi(1,*,O) = 0.0788647918553, q(O|*,O) = 0.954319000537, e(mutations|O) = 0.000434621357873
+
+        pi(2,O,O) = 3.27105462354e-05, argmax = *
+
+        prob = 5.50290682609e-10, pi(2,I-GENE,I-GENE) = 1.69592746501e-06, q(I-GENE|I-GENE,I-GENE) = 0.605770411295, e(in|I-GENE) = 0.000535644721465
+
+        prob = 2.70133799337e-10, pi(2,O,I-GENE) = 8.72732885782e-07, q(I-GENE|O,I-GENE) = 0.577857502518, e(in|I-GENE) = 0.000535644721465
+        */
+        for(int k=1; k<=words.length; k++){
+               if(k == 1){
+                   String[][] tagsArray = new String[][]{{"*","*","O"}, {"*","*","I-GENE"}};
+                   for(String[] tagArray: tagsArray){
+                        String key = "pi("+k+","+tagArray[1]+","+tagArray[2]+")";
+                        WordTag wordTag = new WordTag(words[k-1],tagArray[2]);
+                        float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tagArray[2]));
+                        piMap.put(key,piMap.get("pi(0,*,*)")*qFunction.get(tagArray[2] + "Given" + tagArray[0] + "And" + tagArray[1])*expectation);
+                   }
+                } else if(k==2) {
+                    String[] tags = {"O","I-GENE"};
+                    for(int u=0; u < tags.length; u++){
+                        for(int v=0; v<tags.length; v++){
+                            String key = "pi("+k+","+tags[u]+","+tags[v]+")";
+                            WordTag wordTag = new WordTag(words[k-1],tags[v]);
+                            float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
+                            piMap.put(key,piMap.get("pi(1,*,"+tags[u]+")")*qFunction.get(tags[v] + "Given" + "*" + "And" + tags[u])*expectation);
+                        }
+                    }
+            } else {
+                   String[] tags = {"O","I-GENE"};
+                   for(int u=0; u < tags.length; u++){
+                       for(int v=0; v<tags.length; v++){
+                           String key = "pi("+k+","+tags[u]+","+tags[v]+")";
+                           WordTag wordTag = new WordTag(words[k-1],tags[v]);
+                           float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
+                           piMap.put(key,piMap.get("pi("+ new Integer(k-1) +","+tags[u]+"," + tags[v]+ ")")*qFunction.get(tags[u] + "Given" + tags[u] + "And" + tags[v])*expectation);
+                       }
+                   }
+               }
+            /*
+
+pi(3,I-GENE,I-GENE) = 5.50290682609e-10, argmax = I-GENE
+
+prob = 1.55631734149e-08, pi(2,I-GENE,I-GENE) = 1.69592746501e-06, q(O|I-GENE,I-GENE) = 0.393779414774, e(in|O) = 0.0233043972092
+
+prob = 8.58447090439e-09, pi(2,O,I-GENE) = 8.72732885782e-07, q(O|O,I-GENE) = 0.422079556898, e(in|O) = 0.0233043972092
+
+pi(3,I-GENE,O) = 1.55631734149e-08, argmax = I-GENE
+
+prob = 2.23001925771e-10, pi(2,I-GENE,O) = 1.98251948938e-06, q(I-GENE|I-GENE,O) = 0.20999759384, e(in|I-GENE) = 0.000535644721465
+
+prob = 6.55622210846e-10, pi(2,O,O) = 3.27105462354e-05, q(I-GENE|O,O) = 0.0374187290185, e(in|I-GENE) = 0.000535644721465
+
+pi(3,O,I-GENE) = 6.55622210846e-10, argmax = O
+
+prob = 3.14605445825e-08, pi(2,I-GENE,O) = 1.98251948938e-06, q(O|I-GENE,O) = 0.680943214629, e(in|O) = 0.0233043972092
+
+prob = 7.04857112563e-07, pi(2,O,O) = 3.27105462354e-05, q(O|O,O) = 0.924645831286, e(in|O) = 0.0233043972092
+
+pi(3,O,O) = 7.04857112563e-07, argmax = O
+
+Tag sequence: ['O', 'O', 'O', 'STOP'], prob = 2.67390644875e-08
+
+[('STAT5A', 'O'), ('mutations', 'O'), ('in', 'O'), (None, 'STOP')]
+             */
+        }
+
+        printMap(piMap);
+        assertEquals(1.0F,piMap.get("pi(0,*,*)"));
+        assertEquals(0.078859076F,piMap.get("pi(1,*,O)"));
+        assertEquals(0.011541574F,piMap.get("pi(1,*,I-GENE)"));
+        assertEquals(3.2708176E-5F,piMap.get("pi(2,O,O)"));
+        assertEquals(8.7266966E-7F,piMap.get("pi(2,O,I-GENE)"));
+        assertEquals(1.9823758E-6F,piMap.get("pi(2,I-GENE,O)"));
+        assertEquals(1.6958046E-6F,piMap.get("pi(2,I-GENE,I-GENE)"));
+
+
+        assertEquals(5.502508E-10F,piMap.get("pi(3,I-GENE,I-GENE)"));
+        assertEquals(7.0480604E-7F,piMap.get("pi(3,O,O)"));
+        assertEquals(6.5562221E-10F,piMap.get("pi(3,O,I-GENE)"));
+        assertEquals(1.5563173E-08F,piMap.get("pi(3,I-GENE,O)"));
 
     }
 
@@ -180,5 +268,5 @@ e(_RARE_|O) = 28781/345128 = 0.083392
            LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
         }
     }
-    
+
 }

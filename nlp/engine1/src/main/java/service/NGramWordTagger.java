@@ -280,10 +280,10 @@ public class NGramWordTagger implements WordTagger{
 
         Map<String, Float> piMap = calculatePiMap(words,qFunction,expectationMap);
 
-        Map<Integer,String> maxBackPointer = new LinkedHashMap<Integer,String>();
+        /*Map<Integer,String> maxBackPointer = new LinkedHashMap<Integer,String>();
 
         for(int index=1; index<=words.length; index++){
-            String highestTag = "";
+
             float currentMax = 0.0F;
             for(String key:piMap.keySet()){
                 if(key.startsWith("pi("+index)){
@@ -294,7 +294,7 @@ public class NGramWordTagger implements WordTagger{
                     }
                 }
             }
-        }
+        }*/
 
         Map<String,Float> endMap = new LinkedHashMap<String,Float>();
         String[] tags = {"O","I-GENE"};
@@ -308,12 +308,42 @@ public class NGramWordTagger implements WordTagger{
             }
         }
 
+        String[] calculatedTags = new String[words.length+1];
+
+        calculatedTags[0] = "*";
+        float maxValue = 0.0F;
+        for(String key:endMap.keySet()){
+            if(endMap.get(key) >= maxValue){
+               maxValue = endMap.get(key);
+               String[] split = key.split(",");
+               calculatedTags[words.length]=split[1];
+               calculatedTags[words.length-1]=split[0];
+            }
+        }
+        String[] possibleTags = {"O","I-GENE"};
+        String[] possiblePreTags = {"O","I-GENE"};
+        for(int k = words.length-2; k > 0;k--){
+
+            maxValue = 0.0F;
+            calculatedTags[k] = "O";
+            for(int i=0; i< possiblePreTags.length; i++){
+                //for(int j=0;j<possibleTags.length;j++){
+
+                    String key = "pi("+new Integer(k+2)+","+possiblePreTags[i]+","+calculatedTags[k+2]+")";
+                        float currentValue = piMap.containsKey(key) ? piMap.get(key) : 0.0F;
+                        if(currentValue > maxValue){
+                            maxValue = currentValue;
+                            calculatedTags[k] = possiblePreTags[i];
+                        }
+
+               // }
+           }
+        }
+
+
         List<String> estimatedWords = new ArrayList<String>();
-        int index = 0;
-        for(Entry entry: maxBackPointer.entrySet()){
-            //LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
-            estimatedWords.add(index,words[index] + " " + maxBackPointer.get(index+1));
-            index++;
+        for(int blah=1; blah<=words.length; blah++){
+            estimatedWords.add(words[blah-1] + " " + calculatedTags[blah]);
         }
         return estimatedWords;
     }

@@ -176,6 +176,11 @@ public class WordTaggerTest {
         Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
         Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
 
+        List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap);
+        assertEquals("STAT5A O",results.get(0));
+        assertEquals("mutations O",results.get(1));
+        assertEquals("in O",results.get(2));
+
         wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap);
 
         //wordTagger.estimateWithViterbi("src/test/resources/gene.test","src/test/resources/gene_test.p2.out",qFunction,expectationMap);

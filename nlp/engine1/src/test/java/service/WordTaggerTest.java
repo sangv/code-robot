@@ -151,22 +151,9 @@ public class WordTaggerTest {
         //printMap(piMap);
         assertEquals(1.0F,piMap.get("pi(0,*,*)"));
         assertEquals(0.078859076F,piMap.get("pi(1,*,O)"));
-        //assertEquals(0.011541574F,piMap.get("pi(1,*,I-GENE)"));
         assertEquals(3.2708176E-5F,piMap.get("pi(2,O,O)"));
-        //assertEquals(8.7266966E-7F,piMap.get("pi(2,O,I-GENE)"));
-        //assertEquals(1.9823758E-6F,piMap.get("pi(2,I-GENE,O)"));
-        //assertEquals(1.6958046E-6F,piMap.get("pi(2,I-GENE,I-GENE)"));
 
-
-        //assertEquals(5.502508E-10F,piMap.get("pi(3,I-GENE,I-GENE)"));
-        assertEquals(7.274242E-7F,piMap.get("pi(3,O,O)"));
-        //assertEquals(6.555747E-10F,piMap.get("pi(3,O,I-GENE)"));
-        //assertEquals(1.5562046E-8F,piMap.get("pi(3,I-GENE,O)"));
-
-        //List<String> estimatedWords = ((NGramWordTagger)wordTagger).calculateViterbiEstimates(words, qFunction, expectationMap);
-        /*assertEquals("O",maxBackPointer.get(1));
-        assertEquals("O",maxBackPointer.get(2));
-        assertEquals("O",maxBackPointer.get(3)); */
+        assertEquals(7.0480604E-7F,piMap.get("pi(3,O,O)"));
 
     }
 
@@ -178,6 +165,7 @@ public class WordTaggerTest {
         Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
         Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
 
+        //wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap);
         List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap);
         int index = 0;
         assertEquals("STAT5A O",results.get(index));
@@ -203,7 +191,7 @@ public class WordTaggerTest {
         assertEquals("tyrosine O",results.get(++index));
         assertEquals("phosphorylation O",results.get(++index));
         assertEquals(". O",results.get(++index));
-        //wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap);
+
 
         //wordTagger.estimateWithViterbi("src/test/resources/gene.test","src/test/resources/gene_test.p2.out",qFunction,expectationMap);
 

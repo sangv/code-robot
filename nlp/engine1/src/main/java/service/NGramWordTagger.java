@@ -279,8 +279,10 @@ public class NGramWordTagger implements WordTagger{
 
     List<String> calculateViterbiEstimates(String[] words, Map<String, Float> qFunction, Map<WordTag, Float> expectationMap){
 
-        Map<String, Float> piMap = calculatePiMap(words,qFunction,expectationMap).getPiMap();
+        BackPointer backPointer = calculatePiMap(words,qFunction,expectationMap);
+        Map<String, Float> piMap =  backPointer.getPiMap();
 
+        Map<Integer, String> maxBackPointerMap =  backPointer.getMaxBackPointerMap();
 
 
         Map<String,Float> endMap = new LinkedHashMap<String,Float>();
@@ -313,7 +315,7 @@ public class NGramWordTagger implements WordTagger{
         for(int k = words.length-2; k > 0;k--){
 
 
-            //calculatedTags[k] = maxBackPointer.get(bp);
+            calculatedTags[k] = maxBackPointerMap.get(k+2);
             /*maxValue = 0.0F;
             calculatedTags[k] = "O";
             for(int i=0; i< possiblePreTags.length; i++){
@@ -332,6 +334,7 @@ public class NGramWordTagger implements WordTagger{
 
         List<String> estimatedWords = new ArrayList<String>();
         for(int blah=1; blah<=words.length; blah++){
+            LOG.info(words[blah-1] + " " + calculatedTags[blah]);
             estimatedWords.add(words[blah-1] + " " + calculatedTags[blah]);
         }
         return estimatedWords;
@@ -343,72 +346,42 @@ public class NGramWordTagger implements WordTagger{
         Map<String, Float> piMap = backPointer.getPiMap();
         Map<Integer, String> maxBackPointerMap = backPointer.getMaxBackPointerMap();
         piMap.put("pi(0,*,*)",1.0F);
-
+        String[] wTags;
+        String[] uTags;
+        String[] tags = {"O","I-GENE"};
         for(int k=1; k<=words.length; k++){
 
             if(k == 1){
-
-
-                    WordTag wordTag = new WordTag(words[k-1],"O");
-                    float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_","O"));
-                    float result1 = piMap.get("pi(0,*,*)")*qFunction.get("O" + "Given" + "*" + "And" + "*")*expectation;
-
-                    wordTag = new WordTag(words[k-1],"I-GENE");
-                    expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_","I-GENE"));
-                    float result2 = piMap.get("pi(0,*,*)")*qFunction.get("I-GENE" + "Given" + "*" + "And" + "*")*expectation;
-
-                if(result1 >= result2){
-                        String key = "pi("+k+","+"*"+","+"O"+")";
-                        piMap.put(key,result1);
-                    maxBackPointerMap.put(k,"O");
-                    } else {
-                        String key = "pi("+k+","+"*"+","+"I-GENE"+")";
-                        piMap.put(key,result2);
-                    maxBackPointerMap.put(k,"I-GENE");
-                    }
-
-
-            } else if(k==2) {
-                float currentMax = 0.0F;
-                String[] tags = {"O","I-GENE"};
-                for(int u=0; u < tags.length; u++){
-                    for(int v=0; v<tags.length; v++){
-                        String key = "pi("+k+","+tags[u]+","+tags[v]+")";
-                        WordTag wordTag = new WordTag(words[k-1],tags[v]);
-                        float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
-                        float pivalue =  piMap.containsKey("pi(1,*,"+tags[u]+")") ? piMap.get("pi(1,*,"+tags[u]+")") : 0.0F;
-                        float result = pivalue*qFunction.get(tags[v] + "Given" + "*" + "And" + tags[u])*expectation;
-                        if(result > currentMax){
-                            currentMax = result;
-                            piMap.put(key,result);
-                            maxBackPointerMap.put(k,tags[u]);
-                        }
-
-                    }
-                }
+                wTags = new String[]{"*"};
+                uTags = new String[]{"*"};
+            } else if (k ==2){
+                wTags = new String[]{"*"};
+                uTags = new String[]{"O","I-GENE"};
             } else {
-                String[] tags = {"O","I-GENE"};
-                float currentMax = 0.0F;
-                for(int u=0; u < tags.length; u++){
+                wTags = new String[]{"O","I-GENE"};
+                uTags = new String[]{"O","I-GENE"};
+
+            }
+
+            float currentMax = 0.0F;
+            for(int w=0; w<wTags.length; w++){
+                for(int u=0; u < uTags.length; u++){
                     for(int v=0; v<tags.length; v++){
-                        for(int w=0; w<tags.length; w++){
-                            String key = "pi("+k+","+tags[u]+","+tags[v]+")";
+
+                            String key = "pi("+k+","+uTags[u]+","+tags[v]+")";
                             WordTag wordTag = new WordTag(words[k-1],tags[v]);
                             float expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : expectationMap.get(new WordTag("_RARE_",tags[v]));
-                            float pivalue =  piMap.containsKey("pi("+ new Integer(k-1) +","+tags[w]+"," + tags[u]+ ")") ? piMap.get("pi("+ new Integer(k-1) +","+tags[w]+"," + tags[u]+ ")") : 0.0F;
-                            float result = pivalue*qFunction.get(tags[v] + "Given" + "*" + "And" + tags[u])*expectation;
+                            float pivalue =  piMap.containsKey("pi("+ new Integer(k-1) +","+wTags[w]+"," + uTags[u]+ ")") ? piMap.get("pi("+ new Integer(k-1) +","+wTags[w]+"," + uTags[u]+ ")") : 0.0F;
+                            float result = pivalue*qFunction.get(tags[v] + "Given" + wTags[w] + "And" + uTags[u])*expectation;
                             if(result > currentMax){
                                 currentMax = result;
                                 piMap.put(key,result);
-                                maxBackPointerMap.put(k,tags[u]);
+                                maxBackPointerMap.put(k,wTags[w]);
                             }
                         }
                     }
                 }
-            }
-
         }
-        printMap(maxBackPointerMap);
         return backPointer;
     }
 

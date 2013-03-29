@@ -26,17 +26,17 @@ public interface WordTagger {
 
     void setSentenceReader(SentenceReader sentenceReader);
 
-    Map<Sentence.WordTag,Float> calculateExpectations(Map<String, Integer> tagMap, Map<Sentence.WordTag, Integer> taggedWords) throws IOException;
+    Map<Sentence.WordTag,Double> calculateExpectations(Map<String, Integer> tagMap, Map<Sentence.WordTag, Integer> taggedWords) throws IOException;
 
     void setOutputWriter(OutputWriter outputWriter);
 
-    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Float> expectationMap) throws IOException;
+    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Double> expectationMap) throws IOException;
 
     List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception;
 
-    Map<String,Float> calculateQFunction(TagResults tagResults);
+    Map<String,Double> calculateQFunction(TagResults tagResults);
 
     List<String> getLowOccurenceWords(TagResults tagResults);
 
-    List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Float> qFunction, Map<Sentence.WordTag, Float> expectationMap) throws IOException;
+    List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Double> qFunction, Map<Sentence.WordTag, Double> expectationMap, TagResults tagResults) throws IOException;
 }

@@ -90,7 +90,7 @@ public class WordTaggerTest {
     public void generateUnigramCounts() throws IOException {
         wordTagger.init("src/test/resources/gene.train");
         TagResults originalTagResults = wordTagger.getTagResults();
-        Map<WordTag,Float> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
+        Map<WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
         wordTagger.invalidate();
 
         wordTagger.init("src/test/resources/reduced_count.out");
@@ -98,7 +98,7 @@ public class WordTaggerTest {
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
         Map<Sentence.WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
 
-        Map<WordTag,Float> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
+        Map<WordTag,Double> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
         //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
         List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
@@ -110,11 +110,11 @@ public class WordTaggerTest {
 
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
+        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
 
         System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
         printMap(qFunction);
         assertNotNull(qFunction);
         assertEquals(21,qFunction.size());
@@ -123,17 +123,17 @@ public class WordTaggerTest {
 
         WordTag rareWithTagO = new WordTag("_RARE_","O");
 
-        float expectationOfRAREGivenO =  (float)tagResults.getWordTagCountMap().get(rareWithTagO)/(float)tagResults.getTagCountMap().get("O");
-        assertEquals(0.9456404F, qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2]));
+        double expectationOfRAREGivenO =  (double)tagResults.getWordTagCountMap().get(rareWithTagO)/(double)tagResults.getTagCountMap().get("O");
+        assertEquals(0.9456403565992607, qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2]));
 
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(rareWithTagO));
         assertEquals(new Integer(345128),tagResults.getTagCountMap().get("O"));
 
-        assertEquals(0.08339225F,expectationMap.get(rareWithTagO));
+        assertEquals(0.08339224867295612,expectationMap.get(rareWithTagO));
 
-        Map<String, Float> piMap = new LinkedHashMap<String,Float>();
-        piMap.put("pi(0,*,*)", 1.0F);
-        assertEquals(0.078859076F,piMap.get("pi(0,*,*)")*qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2])*expectationOfRAREGivenO);
+        Map<String, Double> piMap = new LinkedHashMap<String,Double>();
+        piMap.put("pi(0,*,*)", 1.0);
+        assertEquals(0.07885907577270845,piMap.get("pi(0,*,*)")*qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2])*expectationOfRAREGivenO);
     }
 
     @Test
@@ -141,32 +141,37 @@ public class WordTaggerTest {
 
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
+        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
         List<List<String>> wordsList = sentenceReader.readSentences("src/test/resources/gene.dev_one");
         String[] words = wordsList.get(0).toArray(new String[]{});
-        Map<String, Float> piMap = ((NGramWordTagger)wordTagger).calculatePiMap(words, qFunction, expectationMap).getPiMap();
+        Map<String, Double> piMap = ((NGramWordTagger)wordTagger).calculatePiMap(words, qFunction, expectationMap,tagResults).getPiMap();
 
         //printMap(piMap);
-        assertEquals(1.0F,piMap.get("pi(0,*,*)"));
-        assertEquals(0.078859076F,piMap.get("pi(1,*,O)"));
-        assertEquals(3.2708176E-5F,piMap.get("pi(2,O,O)"));
+        assertEquals(1.0,piMap.get("pi(0,*,*)"));
+        assertEquals(0.07885907577270845,piMap.get("pi(1,*,O)"));
+        assertEquals(3.27081753905703E-5,piMap.get("pi(2,O,O)"));
 
-        assertEquals(7.0480604E-7F,piMap.get("pi(3,O,O)"));
+        assertEquals(7.048060248543543E-7,piMap.get("pi(3,O,O)"));
 
     }
 
     @Test
     public void testViterbiAlgorithmOnTest() throws Exception {
 
+        wordTagger.init("src/test/resources/gene.train");
+        TagResults originalTagResults = wordTagger.getTagResults();
+        Map<WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
+        wordTagger.invalidate();
+
         wordTagger.init("src/test/resources/reduced_count.out");
         TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Float> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        Map<String,Float> qFunction = wordTagger.calculateQFunction(tagResults);
+        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
+        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
-        //wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap);
-        List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap);
+        wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap,tagResults);
+        List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap,originalTagResults);
         int index = 0;
         assertEquals("STAT5A O",results.get(index));
         assertEquals("mutations O",results.get(++index));

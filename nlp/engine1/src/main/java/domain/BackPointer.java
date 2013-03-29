@@ -11,23 +11,23 @@ import java.util.Map;
 public class BackPointer {
 
 
-    private Map<String, Float> piMap = new LinkedHashMap<String,Float>();
+    private Map<String, Double> piMap = new LinkedHashMap<String,Double>();
 
-    private Map<Integer,String>  maxBackPointerMap = new LinkedHashMap<Integer,String>();
+    private Map<String,String>  maxBackPointerMap = new LinkedHashMap<String,String>();
 
-    public Map<String, Float> getPiMap() {
+    public Map<String, Double> getPiMap() {
         return piMap;
     }
 
-    public void setPiMap(Map<String, Float> piMap) {
+    public void setPiMap(Map<String, Double> piMap) {
         this.piMap = piMap;
     }
 
-    public Map<Integer, String> getMaxBackPointerMap() {
+    public Map<String, String> getMaxBackPointerMap() {
         return maxBackPointerMap;
     }
 
-    public void setMaxBackPointerMap(Map<Integer, String> maxBackPointerMap) {
+    public void setMaxBackPointerMap(Map<String, String> maxBackPointerMap) {
         this.maxBackPointerMap = maxBackPointerMap;
     }
 

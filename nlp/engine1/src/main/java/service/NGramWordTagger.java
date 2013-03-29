@@ -1,6 +1,6 @@
 package service;
 
-import domain.BackPointer;
+import domain.DynamicProgrammingResults;
 import domain.NGramTag;
 import domain.Sentence;
 import domain.Sentence.WordTag;
@@ -279,21 +279,26 @@ public class NGramWordTagger implements WordTagger{
 
     List<String> calculateViterbiEstimates(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults){
 
-        BackPointer backPointer = calculatePiMap(words,qFunction,expectationMap,tagResults);
-        Map<String, Double> piMap =  backPointer.getPiMap();
+        DynamicProgrammingResults dynamicProgrammingResults = calculatePiMap(words,qFunction,expectationMap,tagResults);
+        Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
 
-        Map<String, String> maxBackPointerMap =  backPointer.getMaxBackPointerMap();
+        Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
 
 
         Map<String,Double> endMap = new LinkedHashMap<String,Double>();
         String[] tags = {"O","I-GENE"};
-        for(int i=0; i< tags.length; i++){
-            for(int j=0; j<tags.length; j++){
-                String lookupKey = "pi(3,"+tags[i]+","+tags[j]+")";
+        double currentMax = 0.0;
+        for(int u=0; u< tags.length; u++){
+            for(int v=0; v<tags.length; v++){
+                String lookupKey = "pi("+Integer.toString(words.length)+","+tags[u]+","+tags[v]+")";
                 Double piValue = piMap.containsKey(lookupKey)?piMap.get(lookupKey):0.0F;
-                String qKey = "STOP" + "Given" + tags[i] + "And" + tags[j];
+                String qKey = "STOP" + "Given" + tags[u] + "And" + tags[v];
                 Double qValue = qFunction.containsKey(qKey)? qFunction.get(qKey) : 0.0F;
-                endMap.put(new String(tags[i] + "," + tags[j]),piValue*qValue);
+                if(piValue*qValue > currentMax){
+                    currentMax = piValue*qValue;
+                    endMap.put(new String(tags[u] + "," + tags[v]),currentMax);
+                }
+
             }
         }
 
@@ -302,17 +307,15 @@ public class NGramWordTagger implements WordTagger{
         calculatedTags[0] = "*";
         double maxValue = 0.0F;
         for(String key:endMap.keySet()){
-            if(endMap.get(key) >= maxValue){
+            if(endMap.get(key) > maxValue){
                maxValue = endMap.get(key);
                String[] split = key.split(",");
                calculatedTags[words.length]=split[1];
                calculatedTags[words.length-1]=split[0];
-               // maxBackPointerMap.put(words.length+"_"+calculatedTags[words.length-1]+"_"+calculatedTags[words.length],null);
             }
         }
 
 
-        //printMap(maxBackPointer);
         for(int k = words.length-2; k > 0;k--){
             calculatedTags[k] = maxBackPointerMap.get(Integer.toString(k+2)+"_"+calculatedTags[k+1]+"_"+calculatedTags[k+2]);
         }
@@ -320,17 +323,16 @@ public class NGramWordTagger implements WordTagger{
 
         List<String> estimatedWords = new ArrayList<String>();
         for(int blah=1; blah<=words.length; blah++){
-            //LOG.info(words[blah-1] + " " + calculatedTags[blah]);
             estimatedWords.add(words[blah-1] + " " + calculatedTags[blah]);
         }
         return estimatedWords;
     }
 
-    protected BackPointer calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults){
+    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults){
 
-        BackPointer backPointer = new BackPointer();
-        Map<String, Double> piMap = backPointer.getPiMap();
-        Map<String, String> maxBackPointerMap = backPointer.getMaxBackPointerMap();
+        DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
+        Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
+        Map<String, String> maxBackPointerMap = dynamicProgrammingResults.getMaxBackPointerMap();
         piMap.put("pi(0,*,*)",1.0);
         String[] wTags;
         String[] uTags;
@@ -346,11 +348,7 @@ public class NGramWordTagger implements WordTagger{
             } else {
                 wTags = new String[]{"O","I-GENE"};
                 uTags = new String[]{"O","I-GENE"};
-            } /*else {
-                wTags = new String[]{"O","I-GENE"};
-                uTags = new String[]{"O","I-GENE"};
-                tags = new String[]{"STOP"};
-            }*/
+            }
 
             for(int u=0; u < uTags.length; u++){
                     for(int v=0; v<tags.length; v++){
@@ -379,15 +377,7 @@ public class NGramWordTagger implements WordTagger{
                     }
                 }
         }
-        return backPointer;
-    }
-
-    public void printMap(Map map){
-        Iterator iter = map.entrySet().iterator();
-        while(iter.hasNext()){
-            Map.Entry entry = (Map.Entry) iter.next();
-            LOG.info("Entry: Key: " + entry.getKey() + " Value: " + entry.getValue());
-        }
+        return dynamicProgrammingResults;
     }
 
 }

@@ -8,7 +8,7 @@ import java.util.Map;
  *
  * @author Sang Venkatraman
  */
-public class BackPointer {
+public class DynamicProgrammingResults {
 
 
     private Map<String, Double> piMap = new LinkedHashMap<String,Double>();

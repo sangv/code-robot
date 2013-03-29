@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import static junit.framework.Assert.*;
-import static junit.framework.Assert.assertEquals;
 
 public class WordTaggerTest {
 
@@ -36,7 +35,6 @@ public class WordTaggerTest {
 
     @Before
     public void setUp() throws Exception {
-        //wordTagger = new NGramWordTagger();
         wordTagger.setSentenceReader(sentenceReader);
         wordTagger.setOutputWriter(outputWriter);
     }
@@ -113,9 +111,8 @@ public class WordTaggerTest {
         Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
 
-        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
         Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
-        printMap(qFunction);
+
         assertNotNull(qFunction);
         assertEquals(21,qFunction.size());
         String[] existingTags = new String[]{"O","*","*"};
@@ -171,6 +168,7 @@ public class WordTaggerTest {
         Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
         wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap,tagResults);
+        wordTagger.estimateWithViterbi("src/test/resources/gene.test","src/test/resources/gene_test.p2.out",qFunction,expectationMap,tagResults);
         List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap,originalTagResults);
         int index = 0;
         assertEquals("STAT5A O",results.get(index));

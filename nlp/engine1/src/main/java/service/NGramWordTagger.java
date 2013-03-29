@@ -5,6 +5,7 @@ import domain.NGramTag;
 import domain.Sentence;
 import domain.Sentence.WordTag;
 import domain.TagResults;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reader.SentenceReader;
@@ -19,6 +20,8 @@ import java.util.Map.Entry;
  * @author Sang Venkatraman
  */
 public class NGramWordTagger implements WordTagger{
+
+    public static String[] RARE_CLASSES = new String[] {"Numeric","AllCaps","LastCaps","RARE"};
 
     private SentenceReader sentenceReader;
 
@@ -87,14 +90,14 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults) throws IOException {
+    public List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException {
 
         List<String> estimatedWords = new ArrayList<String>();
 
         List<List<String>> sentences = sentenceReader.readSentences(testFileLocation);
         for (List<String> sentence : sentences){
               String[] words = sentence.toArray(new String[]{});
-              estimatedWords.addAll(calculateViterbiEstimates(words,qFunction,expectationMap,tagResults));
+              estimatedWords.addAll(calculateViterbiEstimates(words,qFunction,expectationMap,tagResults,useRareSubclasses));
               estimatedWords.add("");
         }
 
@@ -137,7 +140,7 @@ public class NGramWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults) throws Exception {
+    public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults, boolean rareSubClasses) throws Exception {
 
         List<String> toBeReplacedWords = getLowOccurenceWords(tagResults);
         List<String> fixedWordsList = tagResults.getWords();
@@ -151,8 +154,12 @@ public class NGramWordTagger implements WordTagger{
         for(String toBeReplacedWord: toBeReplacedWords){
             //don't have to worry about empty lines because they wont make it here
             int index = fixedWordsList.indexOf(toBeReplacedWord);
-            fixedWordsList.set(index,"_RARE_");
-            newWordTagsList.set(index,"_RARE_" + " " + fixedWordTagsList.get(index).split(" ")[1]);
+            String rareClass = "_RARE_";
+            if(rareSubClasses){
+               rareClass = deduceRareSubclass(toBeReplacedWord);
+            }
+            fixedWordsList.set(index,rareClass);
+            newWordTagsList.set(index,rareClass + " " + fixedWordTagsList.get(index).split(" ")[1]);
         }
 
         outputWriter.write(outputFileLocation, false, newWordTagsList);
@@ -277,9 +284,9 @@ public class NGramWordTagger implements WordTagger{
         return toBeReplacedWords;
     }
 
-    List<String> calculateViterbiEstimates(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults){
+    List<String> calculateViterbiEstimates(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses){
 
-        DynamicProgrammingResults dynamicProgrammingResults = calculatePiMap(words,qFunction,expectationMap,tagResults);
+        DynamicProgrammingResults dynamicProgrammingResults = calculatePiMap(words,qFunction,expectationMap,tagResults, useRareSubclasses);
         Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
 
         Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
@@ -328,7 +335,7 @@ public class NGramWordTagger implements WordTagger{
         return estimatedWords;
     }
 
-    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults){
+    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses){
 
         DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
         Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
@@ -357,13 +364,14 @@ public class NGramWordTagger implements WordTagger{
                             String key = "pi("+k+","+uTags[u]+","+tags[v]+")";
                             WordTag wordTag = new WordTag(words[k-1],tags[v]);
                             double expectation = 0.0F;
-                            if(tagResults.getWordCountMap().containsKey(words[k-1]))
-                                if (tagResults.getWordCountMap().get(words[k-1]) >= 5) {
-                                    expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : 0.0F;
-                                } else {
-                                    expectation = expectationMap.get(new WordTag("_RARE_",tags[v]));//written seperate because this could be optimized
+                            if(tagResults.getWordCountMap().containsKey(words[k-1]) && tagResults.getWordCountMap().get(words[k-1]) >= 5){
+                                expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : 0.0F;
                             } else {
-                                expectation = expectationMap.get(new WordTag("_RARE_",tags[v]));
+                                String rareClass = "_RARE_";
+                                if(useRareSubclasses){
+                                    rareClass = deduceRareSubclass(words[k-1]);
+                                }
+                                expectation = expectationMap.get(new WordTag(rareClass,tags[v]));
                             }
 
                             Double pivalue =  piMap.containsKey("pi("+ new Integer(k-1) +","+wTags[w]+"," + uTags[u]+ ")") ? piMap.get("pi("+ new Integer(k-1) +","+wTags[w]+"," + uTags[u]+ ")") : 0.0F;
@@ -378,6 +386,20 @@ public class NGramWordTagger implements WordTagger{
                 }
         }
         return dynamicProgrammingResults;
+    }
+
+    protected String deduceRareSubclass(String toBeReplacedWord){
+        String rareClass = toBeReplacedWord.matches(".*[0-9].*") ? "_NUMERIC_" : null;
+        if(rareClass == null){
+            rareClass = StringUtils.isAllUpperCase(toBeReplacedWord) ? "_ALL_CAPITALS_" : null;
+        }
+        if(rareClass == null){
+            rareClass = toBeReplacedWord.matches(".*[A-Z]$") ? "_LAST_CAPITAL_" : null;
+        }
+        if(rareClass == null){
+            rareClass = "_RARE_";
+        }
+        return rareClass;
     }
 
 }

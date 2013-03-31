@@ -99,8 +99,8 @@ public class WordTaggerTest {
         Map<WordTag,Double> expectationsMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(), taggedWords);
         //List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
-        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",taggedWords,expectationsMap);
-        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",taggedWords,expectationsMap);
+        List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",expectationsMap,tagResults,false);
+        List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",expectationsMap,tagResults,false);
     }
 
     @Test
@@ -134,87 +134,6 @@ public class WordTaggerTest {
     }
 
     @Test
-    public void testViterbiAlgorithm() throws Exception {
-
-        wordTagger.init("src/test/resources/reduced_count.out");
-        TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
-
-        List<List<String>> wordsList = sentenceReader.readSentences("src/test/resources/gene.dev_one");
-        String[] words = wordsList.get(0).toArray(new String[]{});
-        Map<String, Double> piMap = ((NGramWordTagger)wordTagger).calculatePiMap(words, qFunction, expectationMap,tagResults,false).getPiMap();
-
-        //printMap(piMap);
-        assertEquals(1.0,piMap.get("pi(0,*,*)"));
-        assertEquals(0.07885907577270845,piMap.get("pi(1,*,O)"));
-        assertEquals(3.27081753905703E-5,piMap.get("pi(2,O,O)"));
-
-        assertEquals(7.048060248543543E-7,piMap.get("pi(3,O,O)"));
-
-    }
-
-    @Test
-    public void testViterbiAlgorithmOnTest() throws Exception {
-
-        wordTagger.init("src/test/resources/gene.train");
-        TagResults originalTagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
-        wordTagger.invalidate();
-
-        wordTagger.init("src/test/resources/reduced_count.out");
-        TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
-
-        wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p2.out",qFunction,expectationMap,tagResults,false);
-        wordTagger.estimateWithViterbi("src/test/resources/gene.test","src/test/resources/gene_test.p2.out",qFunction,expectationMap,tagResults,false);
-        List<String> results = wordTagger.estimateWithViterbi("src/test/resources/gene.dev_one","src/test/resources/gene_dev_one.out",qFunction,expectationMap,originalTagResults,false);
-        int index = 0;
-        assertEquals("STAT5A O",results.get(index));
-        assertEquals("mutations O",results.get(++index));
-        assertEquals("in O",results.get(++index));
-        assertEquals("the O",results.get(++index));
-        assertEquals("Src I-GENE",results.get(++index));
-        assertEquals("homology I-GENE",results.get(++index));
-        assertEquals("2 I-GENE",results.get(++index));
-        assertEquals("( I-GENE",results.get(++index));
-        assertEquals("SH2 I-GENE",results.get(++index));
-        assertEquals(") I-GENE",results.get(++index));
-        assertEquals("and O",results.get(++index));
-        assertEquals("SH3 I-GENE",results.get(++index));
-        assertEquals("domains I-GENE",results.get(++index));
-        assertEquals("did O",results.get(++index));
-        assertEquals("not O",results.get(++index));
-        assertEquals("alter O",results.get(++index));
-        assertEquals("the O",results.get(++index));
-        assertEquals("BTK O",results.get(++index));
-        assertEquals("- O",results.get(++index));
-        assertEquals("mediated O",results.get(++index));
-        assertEquals("tyrosine O",results.get(++index));
-        assertEquals("phosphorylation O",results.get(++index));
-        assertEquals(". O",results.get(++index));
-    }
-
-    @Test
-    public void testViterbiAlgorithmWithMultipleRareClassesOnTest() throws Exception {
-
-        wordTagger.init("src/test/resources/gene.train");
-        TagResults originalTagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
-        wordTagger.invalidate();
-
-        wordTagger.init("src/test/resources/reduced_count_multiple_rare.out");
-        TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
-
-        wordTagger.estimateWithViterbi("src/test/resources/gene.dev","src/test/resources/gene_dev.p3.out",qFunction,expectationMap,tagResults,true);
-        wordTagger.estimateWithViterbi("src/test/resources/gene.test","src/test/resources/gene_test.p3.out",qFunction,expectationMap,tagResults,true);
-
-    }
-
-    @Test
     @Ignore
     public void testReplaceLessFrequentWordTags() throws Exception {
         wordTagger.init("src/test/resources/gene.train");
@@ -232,25 +151,6 @@ public class WordTaggerTest {
         assertTrue(replacedWordTagsList.contains(". O"));
         assertTrue(replacedWordTagsList.contains("_RARE_ O"));
         outputWriter.write("src/test/resources/reduced_count.out", false, replacedWordTagsList);
-    }
-
-    @Test
-    public void testGenerateMultipleRareClassTags() throws Exception {
-        wordTagger.init("src/test/resources/gene.train");
-        TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
-        assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
-        assertEquals(399996,tagResults.getWords().size());
-
-        List<String> reducedCountWords = wordTagger.replaceLessFrequentWordTags("src/test/resources/reduced_count_multiple_rare.out",tagResults,true);
-    }
-
-    @Test
-    public void deduceRareSubclass(){
-        assertEquals("_NUMERIC_",((NGramWordTagger)wordTagger).deduceRareSubclass("abc3abc"));
-        assertEquals("_ALL_CAPITALS_",((NGramWordTagger)wordTagger).deduceRareSubclass("ABCABC"));
-        assertEquals("_LAST_CAPITAL_",((NGramWordTagger)wordTagger).deduceRareSubclass("abcabC"));
-        assertEquals("_RARE_",((NGramWordTagger)wordTagger).deduceRareSubclass("rare"));
     }
 
     public void printMap(Map map){

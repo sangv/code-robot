@@ -30,13 +30,11 @@ public interface WordTagger {
 
     void setOutputWriter(OutputWriter outputWriter);
 
-    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Integer> taggedWords, Map<Sentence.WordTag, Double> expectationMap) throws IOException;
+    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException;
 
     List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults, boolean rareSubClasses) throws Exception;
 
     Map<String,Double> calculateQFunction(TagResults tagResults);
 
     List<String> getLowOccurenceWords(TagResults tagResults);
-
-    List<String> estimateWithViterbi(String testFileLocation, String outputFileLocation, Map<String, Double> qFunction, Map<Sentence.WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException;
 }

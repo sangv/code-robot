@@ -23,15 +23,15 @@ import java.util.Map;
 
 import static junit.framework.Assert.*;
 
-public class WordTaggerTest {
+public class NGramWordTaggerTest {
 
-    private WordTagger wordTagger = new NGramWordTagger();
+    private NGramWordTagger wordTagger = new NGramWordTagger();
 
     private OutputWriter outputWriter = new FileOutputWriter();
 
     private SentenceReader sentenceReader = new FileBasedSentenceReader();
 
-    private static final Logger LOG = LoggerFactory.getLogger(WordTaggerTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NGramWordTaggerTest.class);
 
     @Before
     public void setUp() throws Exception {
@@ -101,36 +101,6 @@ public class WordTaggerTest {
         //assertTrue(estimatedWordTags.contains("BACKGROUND O"));
         List<String> estimatedWordTags = wordTagger.estimate("src/test/resources/gene.dev","src/test/resources/gene_dev.p1.out",expectationsMap,tagResults,false);
         List<String> estimatedTestWordTags = wordTagger.estimate("src/test/resources/gene.test","src/test/resources/gene_test.p1.out",expectationsMap,tagResults,false);
-    }
-
-    @Test
-    public void calculateQFunctions() throws IOException {
-
-        wordTagger.init("src/test/resources/reduced_count.out");
-        TagResults tagResults = wordTagger.getTagResults();
-        Map<WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
-        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
-
-        Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
-
-        assertNotNull(qFunction);
-        assertEquals(21,qFunction.size());
-        String[] existingTags = new String[]{"O","*","*"};
-
-
-        WordTag rareWithTagO = new WordTag("_RARE_","O");
-
-        double expectationOfRAREGivenO =  (double)tagResults.getWordTagCountMap().get(rareWithTagO)/(double)tagResults.getTagCountMap().get("O");
-        assertEquals(0.9456403565992607, qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2]));
-
-        assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(rareWithTagO));
-        assertEquals(new Integer(345128),tagResults.getTagCountMap().get("O"));
-
-        assertEquals(0.08339224867295612,expectationMap.get(rareWithTagO));
-
-        Map<String, Double> piMap = new LinkedHashMap<String,Double>();
-        piMap.put("pi(0,*,*)", 1.0);
-        assertEquals(0.07885907577270845,piMap.get("pi(0,*,*)")*qFunction.get(existingTags[0] + "Given" + existingTags[1] + "And" + existingTags[2])*expectationOfRAREGivenO);
     }
 
     @Test

@@ -29,13 +29,13 @@ import static junit.framework.Assert.assertNotNull;
  */
 public class ViterbiAlgorithmWordTaggerTest {
 
-        private WordTagger wordTagger = new ViterbiAlgorithmWordTagger();
+        private ViterbiAlgorithmWordTagger wordTagger = new ViterbiAlgorithmWordTagger();
 
         private OutputWriter outputWriter = new FileOutputWriter();
 
         private SentenceReader sentenceReader = new FileBasedSentenceReader();
 
-        private static final Logger LOG = LoggerFactory.getLogger(WordTaggerTest.class);
+        private static final Logger LOG = LoggerFactory.getLogger(NGramWordTaggerTest.class);
 
         @Before
         public void setUp() throws Exception {

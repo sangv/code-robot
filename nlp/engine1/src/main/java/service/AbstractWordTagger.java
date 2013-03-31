@@ -31,7 +31,7 @@ public abstract class AbstractWordTagger implements WordTagger{
 
     private List<Sentence> sentences;
 
-    private static final Logger LOG = LoggerFactory.getLogger(NGramWordTagger.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractWordTagger.class);
 
     @Override
     public void init(String location) throws IOException {
@@ -83,18 +83,6 @@ public abstract class AbstractWordTagger implements WordTagger{
     @Override
     public void setOutputWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
-    }
-
-    @Override
-    public Map<String,Double> calculateQFunction(TagResults tagResults){
-        Map<NGramTag,Integer> trigramCounts = tagResults.getTrigramTagCountMap();
-        Map<NGramTag,Integer> bigramCounts = tagResults.getBigramTagCountMap();
-        Map<String,Double> qFunctionResults = new LinkedHashMap<String,Double>();
-        calculateQFunction(new String[]{"I-GENE","O","*"},bigramCounts,trigramCounts,qFunctionResults);
-        calculateQFunction(new String[]{"O","I-GENE","*"},bigramCounts,trigramCounts,qFunctionResults);
-        calculateQFunction(new String[]{"STOP","I-GENE","O","*"},bigramCounts,trigramCounts,qFunctionResults);
-
-        return qFunctionResults;
     }
 
     @Override

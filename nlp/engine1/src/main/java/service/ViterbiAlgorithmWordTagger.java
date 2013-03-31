@@ -38,8 +38,7 @@ public class ViterbiAlgorithmWordTagger extends AbstractWordTagger{
         return estimatedWords;
     }
 
-    @Override
-    public Map<String,Double> calculateQFunction(TagResults tagResults){
+    protected Map<String,Double> calculateQFunction(TagResults tagResults){
         Map<NGramTag,Integer> trigramCounts = tagResults.getTrigramTagCountMap();
         Map<NGramTag,Integer> bigramCounts = tagResults.getBigramTagCountMap();
         Map<String,Double> qFunctionResults = new LinkedHashMap<String,Double>();

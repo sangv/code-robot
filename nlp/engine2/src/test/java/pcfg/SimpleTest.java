@@ -2,10 +2,12 @@ package pcfg;
 
 import domain.Sentence.*;
 import domain.TagResults;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.TextNode;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,42 +52,73 @@ public class SimpleTest {
 
         //String[] node = objectMapper.readValue(tree.get(0),String[].class);
         assertNotNull(inputArray);
-        printJSON(inputArray, new StringBuilder());
+        printJSON(inputArray, null);
         //LOG.info(objectMapper.defaultPrettyPrintingWriter().writeValueAsString(inputArray));
 
     }
 
-    protected void printJSON(ArrayNode inputArray, StringBuilder parentString) throws IOException {
+    protected void printJSON(ArrayNode inputArray, String parentPath) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
-
+        boolean containsArrayNodes = false;
         while(iter.hasNext()){
-
-            JsonNode jsonNode = iter.next();
-            if (jsonNode.getTextValue() != null) parentString.append("/").append(jsonNode.getTextValue());
-            boolean containsArrayNodes = false;
-            if(jsonNode instanceof ArrayNode){
-                if (jsonNode.getTextValue() != null) parentString.append("/").append(jsonNode.getTextValue());
-                Iterator<JsonNode> iterator = jsonNode.getElements();
-                while(iterator.hasNext()){
-                     if(iterator.next() instanceof ArrayNode) {
-                         containsArrayNodes = true;
-                         break;
-                     }
-                }
-                if(containsArrayNodes) {
-                    printJSON((ArrayNode)jsonNode,parentString);
-                } else {
-                    parseWordAndEmission((ArrayNode)jsonNode,parentString.toString());
-                    parentString = new StringBuilder();
-                }
-            } else {
-                LOG.info("Outer: " + jsonNode.getTextValue());
+            if(iter.next() instanceof ArrayNode){
+                containsArrayNodes = true;
+                break;
             }
-
         }
+        if(!containsArrayNodes && inputArray.size() == 2){
+            parseWordAndEmission(inputArray,parentPath);
+            String[] split = parentPath.split("/");
+            parentPath = StringUtils.removeEnd(parentPath,split[split.length-1]);
+        } else {
+            iter = inputArray.getElements();
+            while(iter.hasNext()){
+                JsonNode jsonNode = iter.next();
+                if(jsonNode instanceof TextNode){
+                    parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
+                } else if (jsonNode instanceof ArrayNode ){
+                    printJSON((ArrayNode)jsonNode,parentPath);
+                }
+            }
+        }
+        /*while(iter.hasNext()){
+            JsonNode jsonNode = iter.next();
+            if(jsonNode instanceof TextNode){
+                parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
+            }
+            else if(jsonNode instanceof ArrayNode){
+                boolean containsArrayNodes = false;
+                Iterator<JsonNode> iterator = inputArray.getElements();
+                while(iterator.hasNext()){
+                    if(iterator.next() instanceof ArrayNode){
+                        containsArrayNodes = true;
+                        break;
+                    }
+                }
+                if(!containsArrayNodes && ((ArrayNode)jsonNode).size() == 2){
+                    parseWordAndEmission((ArrayNode)jsonNode,parentPath);
+                } else {
+                    printJSON((ArrayNode)jsonNode,parentPath);
+                }
+            }
+        } */
+        /*List<ArrayNode> arrayNodes = new ArrayList<ArrayNode>();
+        while(iter.hasNext()){
+            JsonNode jsonNode = iter.next();
+            if(jsonNode instanceof TextNode){
+                parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
+                LOG.info("parentPath: {}",parentPath);
+            } else if (jsonNode instanceof ArrayNode) {
+                arrayNodes.add((ArrayNode)jsonNode);
+                //printJSON((ArrayNode)jsonNode,node);
+            }
+        }
+        for(ArrayNode arrayNode: arrayNodes){
+            printJSON(arrayNode,parentPath);
+        } */
     }
 
-    protected void parseWordAndEmission(ArrayNode inputArray,String parentString) throws IOException {
+    protected void parseWordAndEmission(ArrayNode inputArray,String parentPath) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
 
         JsonNode tagNode = iter.next();
@@ -94,7 +127,7 @@ public class SimpleTest {
         String word = wordNode.getTextValue();
         String tag = tagNode.getTextValue();
 
-        WordTag wordTag = new WordTagWithPath(word,tag,parentString);
+        WordTag wordTag = new WordTagWithPath(word,tag,parentPath);
         updateCountMap(tagResults.getWordTagCountMap(),wordTag);
         updateCountMap(tagResults.getWordCountMap(),word);
         updateCountMap(tagResults.getTagCountMap(),tag);

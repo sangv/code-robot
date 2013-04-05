@@ -21,9 +21,9 @@ public class Sentence {
      */
     public static class WordTag {
 
-        private String word;
+        protected String word;
 
-        private String tag;
+        protected String tag;
 
         public WordTag(String word, String tag) {
             this.word = word;

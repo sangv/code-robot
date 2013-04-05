@@ -1,9 +1,8 @@
 package pcfg;
 
-import domain.Sentence.*;
+import domain.Sentence.WordTag;
 import domain.TagResults;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -52,12 +51,106 @@ public class SimpleTest {
 
         //String[] node = objectMapper.readValue(tree.get(0),String[].class);
         assertNotNull(inputArray);
-        printJSON(inputArray, null);
-        //LOG.info(objectMapper.defaultPrettyPrintingWriter().writeValueAsString(inputArray));
+        List<WordTag> wordTags = new ArrayList<WordTag>();
+        /*printJSON(inputArray, null, wordTags);
+        assertEquals(wordTags.get(0),new WordTagWithPath("There","DET","/S/NP"));
+        assertEquals(wordTags.get(1),new WordTagWithPath("is","VERB","/S/S/VP"));
+        assertEquals(wordTags.get(2),new WordTagWithPath("no","DET","/S/S/VP/VP/NP"));
+        assertEquals(wordTags.get(3),new WordTagWithPath("asbestos","NOUN","/S/S/VP/VP/NP"));
+        assertEquals(wordTags.get(7), new WordTagWithPath("now", "ADV", "/S/S/VP/VP/VP/ADVP"));
+        assertEquals(wordTags.get(8),new WordTagWithPath(".",".","/S/S"));*/
+        Node parentNode = new Node();
+        parseJSON(inputArray, parentNode, wordTags);
+
+        rewriteTree(parentNode.getLeftNode());
+
+        LOG.info("Printing json eqn {}", objectMapper.writeValueAsString(parentNode.getLeftNode()));
 
     }
 
-    protected void printJSON(ArrayNode inputArray, String parentPath) throws IOException {
+    public void rewriteTree(Node node){
+
+        LOG.info("{} {}",new Object[]{node.getEmission(),node.getWord()});
+        //List<Node> childNodes = new ArrayList<Node>();
+        if(node.getLeftNode() != null){
+            rewriteTree(node.getLeftNode());
+        }
+        if(node.getRightNode() != null){
+            rewriteTree(node.getRightNode());
+        }
+        /*for(Node childNode: childNodes){
+            depth = depth+1;
+            rewriteTree(childNode,depth);
+        } */
+
+    }
+
+    @Test
+    public void rewriteTree(){
+        List<WordTagWithPath> wordPaths = new ArrayList<WordTagWithPath>();
+        wordPaths.add(new WordTagWithPath("There","DET","/S/NP"));
+        wordPaths.add(new WordTagWithPath("is","VERB","/S/S/VP"));
+        wordPaths.add(new WordTagWithPath("no","DET","S/S/VP/VP/NP"));
+        wordPaths.add(new WordTagWithPath("asbestos","NOUN","/S/S/VP/VP/NP"));
+
+        //assertEquals("[\"S\", [\"NP\", [\"DET\", \"There\"]], [\"S\", [\"VP\", [\"VERB\", \"is\"], [\"VP\", [\"NP\", [\"DET\", \"no\"], [\"NOUN\", \"asbestos\"]], [\"VP\", [\"PP\", [\"ADP\", \"in\"], [\"NP\", [\"PRON\", \"our\"], [\"NOUN\", \"products\"]]], [\"ADVP\", [\"ADV\", \"now\"]]]]], [\".\", \".\"]]]",null);
+    }
+
+    public String produceJSON(List<WordTagWithPath> wordPaths){
+        for(WordTagWithPath wordTag: wordPaths){
+
+        }
+        return null;
+    }
+
+
+    protected void parseJSON(ArrayNode inputArray, Node parentNode, List<WordTag> wordTags) throws IOException {
+
+        boolean containsArrayNodes = checkContainsChildArrayNodes(inputArray);
+        if(!containsArrayNodes && inputArray.size() == 2){
+            Node node = parseWordAndEmission(inputArray);
+            if(parentNode.getLeftNode() == null){
+                parentNode.setLeftNode(node);
+            } else {
+                parentNode.setRightNode(node);
+            }
+        } else {
+            Iterator<JsonNode> iter = inputArray.getElements();
+            Node node = parentNode;
+            List<ArrayNode> arrayNodes = new ArrayList<ArrayNode>();
+            while(iter.hasNext()){
+                JsonNode jsonNode = iter.next();
+                if(jsonNode instanceof TextNode){
+                    node = new Node(null,jsonNode.getTextValue());
+                    if(parentNode.getLeftNode() == null){
+                        parentNode.setLeftNode(node);
+                    } else {
+                        parentNode.setRightNode(node);
+                    }
+                } else if (jsonNode instanceof ArrayNode ){
+                    arrayNodes.add((ArrayNode)jsonNode);
+                }
+            }
+            for(ArrayNode arrayNode: arrayNodes){
+                parseJSON(arrayNode,node,wordTags);
+            }
+
+        }
+    }
+
+    private boolean checkContainsChildArrayNodes(ArrayNode inputArray) {
+        boolean containsArrayNodes = false;
+        Iterator<JsonNode> iter = inputArray.getElements();
+        while(iter.hasNext()){
+            if(iter.next() instanceof ArrayNode){
+                containsArrayNodes = true;
+                break;
+            }
+        }
+        return containsArrayNodes;
+    }
+
+    protected void printJSON(ArrayNode inputArray, String parentPath, List<WordTag> wordTags) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
         boolean containsArrayNodes = false;
         while(iter.hasNext()){
@@ -67,58 +160,53 @@ public class SimpleTest {
             }
         }
         if(!containsArrayNodes && inputArray.size() == 2){
-            parseWordAndEmission(inputArray,parentPath);
-            String[] split = parentPath.split("/");
-            parentPath = StringUtils.removeEnd(parentPath,split[split.length-1]);
+            wordTags.add(parseWordAndEmission(inputArray, parentPath));
+            parentPath = removeLastParentPath(parentPath);
         } else {
             iter = inputArray.getElements();
+            List<ArrayNode> arrayNodes = new ArrayList<ArrayNode>();
             while(iter.hasNext()){
                 JsonNode jsonNode = iter.next();
                 if(jsonNode instanceof TextNode){
                     parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
+
                 } else if (jsonNode instanceof ArrayNode ){
-                    printJSON((ArrayNode)jsonNode,parentPath);
+                    arrayNodes.add((ArrayNode)jsonNode);
+
                 }
             }
+            for(ArrayNode arrayNode: arrayNodes){
+                printJSON(arrayNode,parentPath,wordTags);
+            }
+            parentPath = removeLastParentPath(parentPath);
         }
-        /*while(iter.hasNext()){
-            JsonNode jsonNode = iter.next();
-            if(jsonNode instanceof TextNode){
-                parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
-            }
-            else if(jsonNode instanceof ArrayNode){
-                boolean containsArrayNodes = false;
-                Iterator<JsonNode> iterator = inputArray.getElements();
-                while(iterator.hasNext()){
-                    if(iterator.next() instanceof ArrayNode){
-                        containsArrayNodes = true;
-                        break;
-                    }
-                }
-                if(!containsArrayNodes && ((ArrayNode)jsonNode).size() == 2){
-                    parseWordAndEmission((ArrayNode)jsonNode,parentPath);
-                } else {
-                    printJSON((ArrayNode)jsonNode,parentPath);
-                }
-            }
-        } */
-        /*List<ArrayNode> arrayNodes = new ArrayList<ArrayNode>();
-        while(iter.hasNext()){
-            JsonNode jsonNode = iter.next();
-            if(jsonNode instanceof TextNode){
-                parentPath = parentPath != null? parentPath + "/" + jsonNode.getTextValue() : "/" + jsonNode.getTextValue();
-                LOG.info("parentPath: {}",parentPath);
-            } else if (jsonNode instanceof ArrayNode) {
-                arrayNodes.add((ArrayNode)jsonNode);
-                //printJSON((ArrayNode)jsonNode,node);
-            }
-        }
-        for(ArrayNode arrayNode: arrayNodes){
-            printJSON(arrayNode,parentPath);
-        } */
     }
 
-    protected void parseWordAndEmission(ArrayNode inputArray,String parentPath) throws IOException {
+
+    protected Node parseWordAndEmission(ArrayNode inputArray) throws IOException {
+        Iterator<JsonNode> iter = inputArray.getElements();
+
+        JsonNode tagNode = iter.next();
+        JsonNode wordNode = iter.next();
+
+        String word = wordNode.getTextValue();
+        String tag = tagNode.getTextValue();
+
+        WordTag wordTag = new WordTagWithPath(word,tag,null);
+        updateCountMap(tagResults.getWordTagCountMap(),wordTag);
+        updateCountMap(tagResults.getWordCountMap(),word);
+        updateCountMap(tagResults.getTagCountMap(),tag);
+        tagResults.getTags().add(tag);
+        tagResults.getWords().add(word);
+        tagResults.getWordTags().add(word + " " + tag);
+
+        //LOG.info("Fringe nodes " + word + " " + tag);
+        LOG.info("Fringe nodes {} ", new Object[]{wordTag});
+        Node node = new Node(word,tag);
+        return node;
+    }
+
+    protected WordTag parseWordAndEmission(ArrayNode inputArray,String parentPath) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
 
         JsonNode tagNode = iter.next();
@@ -136,7 +224,8 @@ public class SimpleTest {
         tagResults.getWordTags().add(word + " " + tag);
 
         //LOG.info("Fringe nodes " + word + " " + tag);
-        LOG.info("Fringe nodes " + wordTag);
+        LOG.info("Fringe nodes {} ", new Object[]{wordTag});
+        return wordTag;
     }
 
     protected synchronized void updateCountMap(Map map, Object key){
@@ -189,5 +278,10 @@ public class SimpleTest {
 
         outputWriter.write(outputFileLocation, false, newWordTagsList);
         return newWordTagsList;
+    }
+
+    protected String removeLastParentPath(String parentPath){
+        String[] split = parentPath.split("/");
+        return StringUtils.removeEnd(parentPath,"/"+split[split.length-1]);
     }
 }

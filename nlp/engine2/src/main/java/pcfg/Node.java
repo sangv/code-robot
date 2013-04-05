@@ -1,10 +1,5 @@
 package pcfg;
 
-import domain.Sentence.WordTag;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This ${TYPE}
  *
@@ -12,15 +7,17 @@ import java.util.List;
  */
 public class Node{
     private String emission;
-    private Node parent;
-    List<Node> children = new ArrayList<Node>();
+    private String word;
+    private Node leftNode;
+    private Node rightNode;
 
 
     public Node() {
         super();
     }
 
-    public Node(String emission) {
+    public Node(String word, String emission) {
+        this.word = word;
         this.emission = emission;
     }
 
@@ -28,24 +25,32 @@ public class Node{
         return emission;
     }
 
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
     public void setEmission(String emission) {
         this.emission = emission;
     }
 
-    public List<Node> getChildren() {
-        return children;
+    public Node getLeftNode() {
+        return leftNode;
     }
 
-    public void addChild(Node child) {
-        children.add(child);
+    public void setLeftNode(Node leftNode) {
+        this.leftNode = leftNode;
     }
 
-    public void setParent(Node parent) {
-        this.parent = parent;
+    public Node getRightNode() {
+        return rightNode;
     }
 
-    public Node getParent() {
-        return parent;
+    public void setRightNode(Node rightNode) {
+        this.rightNode = rightNode;
     }
 }
 

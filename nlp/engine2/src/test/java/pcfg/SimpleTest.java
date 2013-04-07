@@ -2,7 +2,6 @@ package pcfg;
 
 import domain.Sentence.WordTag;
 import domain.TagResults;
-import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -16,10 +15,7 @@ import writer.FileOutputWriter;
 import writer.OutputWriter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -41,8 +37,6 @@ public class SimpleTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    TagResults tagResults = new TagResults();
-
     @Test
     public void loadTree() throws Exception{
 
@@ -50,20 +44,51 @@ public class SimpleTest {
         assertNotNull(tree);
         ArrayNode inputArray = (ArrayNode) objectMapper.readTree(tree.get(0));
 
+        TagResults tagResults = new TagResults();
         Node parentNode = new Node();
-        parseJSON(inputArray, parentNode);
-        ArrayNode outputArrayNode = rewriteTree(parentNode.getLeftNode(),null);
+        parseJSON(inputArray, parentNode,tagResults);
+        ArrayNode outputArrayNode = rewriteTree(parentNode.getLeftNode(),null,null);
         String outputString = objectMapper.writeValueAsString(outputArrayNode).replaceAll(",",", ");
         LOG.info("Output String {}",outputString);
         assertEquals(tree.get(0),outputString);
     }
 
-    public ArrayNode rewriteTree(Node node, ArrayNode outputArrayNode){
+    @Test
+    public void replaceRareTrainingWords() throws Exception {
+
+        TagResults tagResults = new TagResults();
+        List<String> trainingData = sentenceReader.getContents("src/test/resources/pcfg/parse_train.dat");
+        List<Node> sentences = new ArrayList<Node>();
+
+        for(String train: trainingData){
+            ArrayNode inputArray = (ArrayNode) objectMapper.readTree(train);
+            Node parentNode = new Node();
+            parseJSON(inputArray, parentNode,tagResults);
+            sentences.add(parentNode.getLeftNode());
+        }
+
+        Set<String> rareWords = getLowOccurrenceWords(tagResults);
+        List<String> newWordTagsList = new ArrayList<String>();
+
+        for(Node node:sentences){
+            ArrayNode outputArrayNode = rewriteTree(node,null,rareWords);
+            String outputString = objectMapper.writeValueAsString(outputArrayNode).replaceAll(",",", ");
+            newWordTagsList.add(outputString);
+        }
+
+        outputWriter.write("src/test/resources/pcfg/parse_train_reduced.dat", false, newWordTagsList);
+    }
+
+    public ArrayNode rewriteTree(Node node, ArrayNode outputArrayNode, Set<String> rareWords){
 
         ArrayNode childArrayNode = objectMapper.createArrayNode();
         if(node.getWord() != null){
             childArrayNode.add(node.getEmission());
-            childArrayNode.add(node.getWord());
+            if(rareWords != null && rareWords.contains(node.getWord())){
+            childArrayNode.add("_RARE_");
+            } else {
+                childArrayNode.add(node.getWord());
+            }
         }  else {
             childArrayNode.add(node.getEmission());
         }
@@ -81,17 +106,17 @@ public class SimpleTest {
             childNodes.add(node.getRightNode());
         }
         for(Node childNode: childNodes){
-            rewriteTree(childNode,childArrayNode);
+            rewriteTree(childNode,childArrayNode,rareWords);
         }
 
         return outputArrayNode;
     }
 
-    protected void parseJSON(ArrayNode inputArray, Node parentNode) throws IOException {
+    protected void parseJSON(ArrayNode inputArray, Node parentNode, TagResults tagResults) throws IOException {
 
         boolean containsArrayNodes = checkContainsChildArrayNodes(inputArray);
         if(!containsArrayNodes && inputArray.size() == 2){
-            Node node = parseWordAndEmission(inputArray);
+            Node node = parseWordAndEmission(inputArray,tagResults);
             attachNode(node, parentNode);
         } else {
             Iterator<JsonNode> iter = inputArray.getElements();
@@ -107,7 +132,7 @@ public class SimpleTest {
                 }
             }
             for(ArrayNode arrayNode: arrayNodes){
-                parseJSON(arrayNode,node);
+                parseJSON(arrayNode,node,tagResults);
             }
 
         }
@@ -133,7 +158,7 @@ public class SimpleTest {
         return containsArrayNodes;
     }
 
-    protected Node parseWordAndEmission(ArrayNode inputArray) throws IOException {
+    protected Node parseWordAndEmission(ArrayNode inputArray, TagResults tagResults) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
 
         JsonNode tagNode = iter.next();
@@ -142,7 +167,7 @@ public class SimpleTest {
         String word = wordNode.getTextValue();
         String tag = tagNode.getTextValue();
 
-        WordTag wordTag = new WordTagWithPath(word,tag,null);
+        WordTag wordTag = new WordTag(word,tag);
         updateCountMap(tagResults.getWordTagCountMap(),wordTag);
         updateCountMap(tagResults.getWordCountMap(),word);
         updateCountMap(tagResults.getTagCountMap(),tag);
@@ -160,12 +185,11 @@ public class SimpleTest {
     }
 
 
-    public List<String> getLowOccurenceWords(TagResults tagResults){
-        Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
+    public Set<String> getLowOccurrenceWords(TagResults tagResults){
+
         Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
-        Integer countOfRareAndIGene = 0;
-        Integer countOfRareAndO = 0;
-        List<String> toBeReplacedWords = new ArrayList<String>();
+
+        Set<String> toBeReplacedWords = new LinkedHashSet<String>();
         Iterator<Map.Entry<String,Integer>> iter = wordCountMap.entrySet().iterator();
         while(iter.hasNext()){
             Map.Entry<String,Integer> entry = iter.next();
@@ -173,41 +197,11 @@ public class SimpleTest {
                 for(int j=0; j< entry.getValue(); j++){
                     toBeReplacedWords.add(entry.getKey());
                 }
-                int incrementIGeneBy = taggedWords.containsKey(new WordTag(entry.getKey(),"I-GENE")) ? taggedWords.get(new WordTag(entry.getKey(),"I-GENE")):0;
-                countOfRareAndIGene = countOfRareAndIGene+incrementIGeneBy;
-                int incrementOBy = taggedWords.containsKey(new WordTag(entry.getKey(),"O")) ? taggedWords.get(new WordTag(entry.getKey(),"O")):0;
-                countOfRareAndO = countOfRareAndO + incrementOBy;
             }
         }
         return toBeReplacedWords;
     }
 
-    public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults, boolean rareSubClasses) throws Exception {
 
-        List<String> toBeReplacedWords = getLowOccurenceWords(tagResults);
-        List<String> fixedWordsList = tagResults.getWords();
-        List<String> fixedWordTagsList = tagResults.getWordTags();
 
-        List<String> newWordTagsList = new ArrayList<String>();
-        for(String wordTag: fixedWordTagsList){
-            newWordTagsList.add(wordTag);
-        }
-
-        for(String toBeReplacedWord: toBeReplacedWords){
-            //don't have to worry about empty lines because they wont make it here
-            int index = fixedWordsList.indexOf(toBeReplacedWord);
-            String rareClass = "_RARE_";
-
-            fixedWordsList.set(index,rareClass);
-            newWordTagsList.set(index,rareClass + " " + fixedWordTagsList.get(index).split(" ")[1]);
-        }
-
-        outputWriter.write(outputFileLocation, false, newWordTagsList);
-        return newWordTagsList;
-    }
-
-    protected String removeLastParentPath(String parentPath){
-        String[] split = parentPath.split("/");
-        return StringUtils.removeEnd(parentPath,"/"+split[split.length-1]);
-    }
 }

@@ -1,7 +1,8 @@
 package pcfg;
 
+import domain.DynamicProgrammingResults;
+import domain.NGramTag;
 import domain.Sentence.WordTag;
-import domain.TagResults;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -9,6 +10,7 @@ import org.codehaus.jackson.node.TextNode;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pcfg.domain.CKYTagResults;
 import reader.FileBasedSentenceReader;
 import reader.SentenceReader;
 import writer.FileOutputWriter;
@@ -44,7 +46,7 @@ public class SimpleTest {
         assertNotNull(tree);
         ArrayNode inputArray = (ArrayNode) objectMapper.readTree(tree.get(0));
 
-        TagResults tagResults = new TagResults();
+        CKYTagResults tagResults = new CKYTagResults();
         Node parentNode = new Node();
         parseJSON(inputArray, parentNode,tagResults);
         ArrayNode outputArrayNode = rewriteTree(parentNode.getLeftNode(),null,null);
@@ -56,7 +58,7 @@ public class SimpleTest {
     @Test
     public void replaceRareTrainingWords() throws Exception {
 
-        TagResults tagResults = new TagResults();
+        CKYTagResults tagResults = new CKYTagResults();
         List<String> trainingData = sentenceReader.getContents("src/test/resources/pcfg/parse_train.dat");
         List<Node> sentences = new ArrayList<Node>();
 
@@ -77,6 +79,32 @@ public class SimpleTest {
         }
 
         outputWriter.write("src/test/resources/pcfg/parse_train_reduced.dat", false, newWordTagsList);
+    }
+
+    @Test
+    public void loadReplacedTrainingwords() throws Exception {
+
+        CKYTagResults tagResults = new CKYTagResults();
+        List<String> results = sentenceReader.getContents("src/test/resources/pcfg/parse_train.counts.out");
+        for(String result: results){
+            String[] split = result.split(" ");
+            if("NONTERMINAL".equals(split[1])){
+                tagResults.getNonTerminalCountMap().put(split[2], new Integer(split[0]));
+            } else if("UNARYRULE".equals(split[1])){
+                tagResults.getUnaryRuleCountMap().put(new WordTag(split[1], split[2]), new Integer(split[0]));
+            } else if("BINARYRULE".equals(split[1])){
+                tagResults.getBinaryRuleCountMap().put(new NGramTag(3, split[1], split[2], split[3]), new Integer(split[0]));
+            }
+        }
+
+        //Calculate QFunctions
+        Map<String,Double> qFunctionY1Y2GivenX = new LinkedHashMap<String,Double>();
+        calculateY1Y2GivenX(tagResults.getTags().toArray(new String[]{}),tagResults.getNonTerminalCountMap(),tagResults.getBinaryRuleCountMap(),qFunctionY1Y2GivenX);
+
+        Map<String,Double> qFunctionWordGivenX = new LinkedHashMap<String,Double>();
+        calculateWordGivenX(tagResults.getTags().toArray(new String[]{}),tagResults.getNonTerminalCountMap(),tagResults.getWords(),tagResults.getWordTagCountMap(),qFunctionWordGivenX);
+
+
     }
 
     public ArrayNode rewriteTree(Node node, ArrayNode outputArrayNode, Set<String> rareWords){
@@ -112,7 +140,7 @@ public class SimpleTest {
         return outputArrayNode;
     }
 
-    protected void parseJSON(ArrayNode inputArray, Node parentNode, TagResults tagResults) throws IOException {
+    protected void parseJSON(ArrayNode inputArray, Node parentNode, CKYTagResults tagResults) throws IOException {
 
         boolean containsArrayNodes = checkContainsChildArrayNodes(inputArray);
         if(!containsArrayNodes && inputArray.size() == 2){
@@ -158,7 +186,7 @@ public class SimpleTest {
         return containsArrayNodes;
     }
 
-    protected Node parseWordAndEmission(ArrayNode inputArray, TagResults tagResults) throws IOException {
+    protected Node parseWordAndEmission(ArrayNode inputArray, CKYTagResults tagResults) throws IOException {
         Iterator<JsonNode> iter = inputArray.getElements();
 
         JsonNode tagNode = iter.next();
@@ -185,7 +213,7 @@ public class SimpleTest {
     }
 
 
-    public Set<String> getLowOccurrenceWords(TagResults tagResults){
+    public Set<String> getLowOccurrenceWords(CKYTagResults tagResults){
 
         Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
 
@@ -200,6 +228,99 @@ public class SimpleTest {
             }
         }
         return toBeReplacedWords;
+    }
+
+    protected void calculateXGivenY1Y2Counts(Node node,Map<String,Double> qFunctionMap){
+        String emission = node.getEmission();
+        if(node.getWord() == null){//implying that this is a non-terminal
+           String leftNodeEmission = node.getLeftNode() != null? node.getLeftNode().getEmission():null;
+           String rightNodeEmission = node.getRightNode() != null? node.getRightNode().getEmission():null;
+            if(leftNodeEmission != null && rightNodeEmission != null){
+
+            }
+        }
+
+    }
+
+
+    protected void calculateY1Y2GivenX(String[] keyTags,Map<String,Integer> nonTerminalTagCounts, Map<NGramTag,Integer> binaryRuleCounts, Map<String,Double> qFunctionMap){
+
+        for(int i=0; i< keyTags.length; i++){
+            String tag = keyTags[i];
+            for(int j=0; j< keyTags.length; j++){
+                for(int k=0; k< keyTags.length; k++){
+                NGramTag binaryRuleTag = new NGramTag(3,keyTags[i],keyTags[j],keyTags[k]);
+
+                int numerator = binaryRuleCounts.containsKey(binaryRuleTag) ? binaryRuleCounts.get(binaryRuleTag) : 0;
+                    int denominator = nonTerminalTagCounts.containsKey(tag) ? nonTerminalTagCounts.get(tag) : 0;
+                double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
+                if(qFunction > 0) {
+                    qFunctionMap.put(keyTags[i] + "Given" + keyTags[j] + "And" + keyTags[k],qFunction);
+                }
+                }
+            }
+        }
+    }
+
+    protected void calculateWordGivenX(String[] keyTags,Map<String,Integer> nonTerminalTagCounts, List<String> words, Map<WordTag,Integer> unaryRuleCounts, Map<String,Double> qFunctionMap){
+
+        for(int i=0; i< keyTags.length; i++){
+            String tag = keyTags[i];
+            for(String word:words){
+
+                    WordTag wordTag = new WordTag(word,tag);
+
+                    int numerator = unaryRuleCounts.containsKey(wordTag) ? unaryRuleCounts.get(wordTag) : 0;
+                    int denominator = nonTerminalTagCounts.containsKey(tag) ? nonTerminalTagCounts.get(tag) : 0;
+                    double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
+                    if(qFunction > 0) {
+                        qFunctionMap.put(word + "Given" + keyTags[i],qFunction);
+                    }
+
+            }
+        }
+    }
+
+    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunctionY1Y2GivenX, Map<String,Double> qFunctionWordGivenX, Map<WordTag, Double> expectationMap, CKYTagResults tagResults, boolean useRareSubclasses){
+
+        DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
+        Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
+        Map<String, String> maxBackPointerMap = dynamicProgrammingResults.getMaxBackPointerMap();
+        Set<Map.Entry<NGramTag,Integer>> binaryRuleMap = tagResults.getBinaryRuleCountMap().entrySet();
+
+        for(Map.Entry<NGramTag,Integer> ngramEntry: binaryRuleMap){
+            String X = ngramEntry.getKey().getTag();
+            String Y = ngramEntry.getKey().getOthers()[0];
+            String Z = ngramEntry.getKey().getOthers()[1];
+            for(int i=0; i < words.length; i++){
+                double qValue = qFunctionWordGivenX.containsKey(words[i]+"Given"+X) ? qFunctionWordGivenX.get(words[i] + "Given" + X) : 0.0;
+                piMap.put("pi("+i+","+i+","+X+")",qValue);
+                for(int j=i+1; j<words.length; j++){
+                    double currentMax = 0.0F;
+                    for(int s=0; s<words.length; s++){
+                        String key = "pi("+i+","+j+","+X+")";
+
+                        /*double expectation = 0.0F;
+                        if(tagResults.getWordCountMap().containsKey(words[k-1]) && tagResults.getWordCountMap().get(words[k-1]) >= 5){
+                            expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : 0.0F;
+                        } else {
+                            String rareClass = "_RARE_";
+                            expectation = expectationMap.get(new WordTag(rareClass,tags[v]));
+                        }*/
+                        Double pivalue1 = piMap.containsKey("pi("+ i +","+s+"," + Y+ ")") ? piMap.get("pi("+ i +","+s+"," + Y+ ")") : 0.0F;
+                        Double pivalue2 = piMap.containsKey("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") ? piMap.get("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") : 0.0F;
+                        Double pivalue =  qFunctionY1Y2GivenX.get(X + "Given" + Y + "And" + Z)*pivalue1*pivalue2;
+
+                        if(pivalue > currentMax){ //TODO revisit
+                            currentMax = pivalue;
+                            piMap.put(key,pivalue);
+                            maxBackPointerMap.put(i+","+j+","+X,s+"_"+Y+"_"+Z);
+                        }
+                    }
+                }
+            }
+        }
+        return dynamicProgrammingResults;
     }
 
 

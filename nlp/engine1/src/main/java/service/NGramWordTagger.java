@@ -1,15 +1,12 @@
 package service;
 
-import domain.DynamicProgrammingResults;
-import domain.NGramTag;
 import domain.Sentence.WordTag;
-import domain.TagResults;
+import domain.NGramTagResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  *
@@ -21,7 +18,7 @@ public class NGramWordTagger extends AbstractWordTagger{
 
 
     @Override
-    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException {
+    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses) throws IOException {
 
         Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
         Map<String,String> expectedTags = calculateExpectedTagMap(taggedWords,expectationMap);

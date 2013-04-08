@@ -1,7 +1,7 @@
 package service;
 
+import domain.NGramTagResults;
 import domain.Sentence;
-import domain.TagResults;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -53,7 +53,7 @@ public class ViterbiAlgorithmWordTaggerTest {
         public void calculateQFunctions() throws IOException {
 
             wordTagger.init("src/test/resources/reduced_count.out");
-            TagResults tagResults = wordTagger.getTagResults();
+            NGramTagResults tagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
             assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new Sentence.WordTag("_RARE_","O")));
 
@@ -83,7 +83,7 @@ public class ViterbiAlgorithmWordTaggerTest {
         public void testViterbiAlgorithm() throws Exception {
 
             wordTagger.init("src/test/resources/reduced_count.out");
-            TagResults tagResults = wordTagger.getTagResults();
+            NGramTagResults tagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
             Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
@@ -104,12 +104,12 @@ public class ViterbiAlgorithmWordTaggerTest {
         public void testViterbiAlgorithmOnTest() throws Exception {
 
             wordTagger.init("src/test/resources/gene.train");
-            TagResults originalTagResults = wordTagger.getTagResults();
+            NGramTagResults originalTagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
             wordTagger.invalidate();
 
             wordTagger.init("src/test/resources/reduced_count.out");
-            TagResults tagResults = wordTagger.getTagResults();
+            NGramTagResults tagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
             Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
@@ -146,12 +146,12 @@ public class ViterbiAlgorithmWordTaggerTest {
         public void testViterbiAlgorithmWithMultipleRareClassesOnTest() throws Exception {
 
             wordTagger.init("src/test/resources/gene.train");
-            TagResults originalTagResults = wordTagger.getTagResults();
+            NGramTagResults originalTagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
             wordTagger.invalidate();
 
             wordTagger.init("src/test/resources/reduced_count_multiple_rare.out");
-            TagResults tagResults = wordTagger.getTagResults();
+            NGramTagResults tagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Double> expectationMap = wordTagger.calculateExpectations(tagResults.getTagCountMap(),tagResults.getWordTagCountMap());
             Map<String,Double> qFunction = wordTagger.calculateQFunction(tagResults);
 
@@ -164,7 +164,7 @@ public class ViterbiAlgorithmWordTaggerTest {
         @Ignore
         public void testGenerateMultipleRareClassTags() throws Exception {
             wordTagger.init("src/test/resources/gene.train");
-            TagResults tagResults = wordTagger.getTagResults();
+            NGramTagResults tagResults = wordTagger.getTagResults();
             Map<Sentence.WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
             assertEquals(new Integer(2),taggedWords.get(new Sentence.WordTag("revascularisation","O")));
             assertEquals(399996,tagResults.getWords().size());

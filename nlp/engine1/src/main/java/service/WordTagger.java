@@ -1,6 +1,7 @@
 package service;
 
 import domain.NGramTag;
+import domain.NGramTagResults;
 import domain.Sentence;
 import domain.TagResults;
 import reader.SentenceReader;
@@ -22,7 +23,7 @@ public interface WordTagger {
 
     void invalidate();
 
-    TagResults getTagResults();
+    NGramTagResults getTagResults();
 
     void setSentenceReader(SentenceReader sentenceReader);
 
@@ -30,9 +31,9 @@ public interface WordTagger {
 
     void setOutputWriter(OutputWriter outputWriter);
 
-    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException;
+    List<String> estimate(String testFileLocation, String outputFileLocation, Map<Sentence.WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses) throws IOException;
 
-    List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults, boolean rareSubClasses) throws Exception;
+    List<String> replaceLessFrequentWordTags(String outputFileLocation, NGramTagResults tagResults, boolean rareSubClasses) throws Exception;
 
-    List<String> getLowOccurenceWords(TagResults tagResults);
+    List<String> getLowOccurenceWords(NGramTagResults tagResults);
 }

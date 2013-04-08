@@ -2,8 +2,8 @@ package service;
 
 import domain.DynamicProgrammingResults;
 import domain.NGramTag;
+import domain.NGramTagResults;
 import domain.Sentence.WordTag;
-import domain.TagResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public class ViterbiAlgorithmWordTagger extends AbstractWordTagger{
 
 
     @Override
-    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses) throws IOException {
+    public List<String> estimate(String testFileLocation, String outputFileLocation, Map<WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses) throws IOException {
 
         Map<String,Double> qFunction = calculateQFunction(tagResults);
 
@@ -38,7 +38,7 @@ public class ViterbiAlgorithmWordTagger extends AbstractWordTagger{
         return estimatedWords;
     }
 
-    protected Map<String,Double> calculateQFunction(TagResults tagResults){
+    protected Map<String,Double> calculateQFunction(NGramTagResults tagResults){
         Map<NGramTag,Integer> trigramCounts = tagResults.getTrigramTagCountMap();
         Map<NGramTag,Integer> bigramCounts = tagResults.getBigramTagCountMap();
         Map<String,Double> qFunctionResults = new LinkedHashMap<String,Double>();
@@ -67,7 +67,7 @@ public class ViterbiAlgorithmWordTagger extends AbstractWordTagger{
             }
     }
 
-    List<String> calculateViterbiEstimates(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses){
+    List<String> calculateViterbiEstimates(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses){
 
         DynamicProgrammingResults dynamicProgrammingResults = calculatePiMap(words,qFunction,expectationMap,tagResults, useRareSubclasses);
         Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
@@ -118,7 +118,7 @@ public class ViterbiAlgorithmWordTagger extends AbstractWordTagger{
         return estimatedWords;
     }
 
-    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses){
+    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses){
 
         DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
         Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();

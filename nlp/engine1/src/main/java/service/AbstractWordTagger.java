@@ -1,10 +1,7 @@
 package service;
 
-import domain.DynamicProgrammingResults;
-import domain.NGramTag;
-import domain.Sentence;
+import domain.*;
 import domain.Sentence.WordTag;
-import domain.TagResults;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +24,7 @@ public abstract class AbstractWordTagger implements WordTagger{
 
     private OutputWriter outputWriter;
 
-    private TagResults tagResults;
+    private NGramTagResults tagResults;
 
     private List<Sentence> sentences;
 
@@ -43,11 +40,11 @@ public abstract class AbstractWordTagger implements WordTagger{
     public Map<NGramTag,Integer> getNGramCounts(int length){
         switch (length) {
             case 1:
-                return tagResults.getUnigramTagCountMap();
+                return ((NGramTagResults)tagResults).getUnigramTagCountMap();
             case 2:
-                return tagResults.getBigramTagCountMap();
+                return ((NGramTagResults)tagResults).getBigramTagCountMap();
             case 3:
-                return tagResults.getTrigramTagCountMap();
+                return ((NGramTagResults)tagResults).getTrigramTagCountMap();
         }
         return null;
     }
@@ -66,12 +63,12 @@ public abstract class AbstractWordTagger implements WordTagger{
 
     @Override
     public void invalidate(){
-        tagResults = new TagResults();
+        tagResults = new NGramTagResults();
         sentences = new ArrayList<Sentence>();
     }
 
     @Override
-    public TagResults getTagResults() {
+    public NGramTagResults getTagResults() {
         return tagResults;
     }
 
@@ -86,7 +83,7 @@ public abstract class AbstractWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> replaceLessFrequentWordTags(String outputFileLocation, TagResults tagResults, boolean rareSubClasses) throws Exception {
+    public List<String> replaceLessFrequentWordTags(String outputFileLocation, NGramTagResults tagResults, boolean rareSubClasses) throws Exception {
 
         List<String> toBeReplacedWords = getLowOccurenceWords(tagResults);
         List<String> fixedWordsList = tagResults.getWords();
@@ -116,7 +113,7 @@ public abstract class AbstractWordTagger implements WordTagger{
 
         LOG.info("Pre-calculating NGramCounts");
 
-        tagResults = new TagResults();
+        tagResults = new NGramTagResults();
         for(Sentence sentence: sentences){
 
             WordTag[] wordTags =  sentence.getWordTags().toArray(new WordTag[]{});
@@ -133,7 +130,7 @@ public abstract class AbstractWordTagger implements WordTagger{
                     tagResults.getWordTags().add(wordTags[i].getWord() + " " + wordTags[i].getTag());
 
                     NGramTag nGramTag = new NGramTag(1,wordTags[i].getTag());
-                    updateCountMap(tagResults.getUnigramTagCountMap(), nGramTag);
+                    updateCountMap(((NGramTagResults)tagResults).getUnigramTagCountMap(), nGramTag);
                 }
 
                 //calculate 2-gram tag counts
@@ -141,13 +138,13 @@ public abstract class AbstractWordTagger implements WordTagger{
                 if(i < wordTags.length - 1){
                     String tagAfter = wordTags[i+1].getTag();
                     NGramTag nGramTag = new NGramTag(2,tagBefore,tagAfter);
-                    updateCountMap(tagResults.getBigramTagCountMap(),nGramTag);
+                    updateCountMap(((NGramTagResults)tagResults).getBigramTagCountMap(),nGramTag);
 
                     //calculate 3-gram tag counts
                     if(i < wordTags.length - 2){
                         String tagAfterAfter = wordTags[i+2].getTag();
                         NGramTag threeGramTag = new NGramTag(3,tagBefore,tagAfter,tagAfterAfter);
-                        updateCountMap(tagResults.getTrigramTagCountMap(),threeGramTag);
+                        updateCountMap(((NGramTagResults)tagResults).getTrigramTagCountMap(),threeGramTag);
                     }
                 }
             }
@@ -208,7 +205,7 @@ public abstract class AbstractWordTagger implements WordTagger{
     }
 
     @Override
-    public List<String> getLowOccurenceWords(TagResults tagResults){
+    public List<String> getLowOccurenceWords(NGramTagResults tagResults){
         Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
         Map<String,Integer> wordCountMap = tagResults.getWordCountMap();
         Integer countOfRareAndIGene = 0;
@@ -230,7 +227,7 @@ public abstract class AbstractWordTagger implements WordTagger{
         return toBeReplacedWords;
     }
 
-    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, TagResults tagResults, boolean useRareSubclasses){
+    protected DynamicProgrammingResults calculatePiMap(String[] words, Map<String, Double> qFunction, Map<WordTag, Double> expectationMap, NGramTagResults tagResults, boolean useRareSubclasses){
 
         DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
         Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();

@@ -4,6 +4,7 @@ import domain.NGramTag;
 import domain.Sentence;
 import domain.Sentence.WordTag;
 import domain.TagResults;
+import domain.NGramTagResults;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -87,12 +88,12 @@ public class NGramWordTaggerTest {
     @Test
     public void generateUnigramCounts() throws IOException {
         wordTagger.init("src/test/resources/gene.train");
-        TagResults originalTagResults = wordTagger.getTagResults();
+        NGramTagResults originalTagResults = (NGramTagResults) wordTagger.getTagResults();
         Map<WordTag,Double> originalExpectationsMap = wordTagger.calculateExpectations(originalTagResults.getTagCountMap(), originalTagResults.getWordTagCountMap());
         wordTagger.invalidate();
 
         wordTagger.init("src/test/resources/reduced_count.out");
-        TagResults tagResults = wordTagger.getTagResults();
+        NGramTagResults tagResults = wordTagger.getTagResults();
         assertEquals(new Integer(28781),tagResults.getWordTagCountMap().get(new WordTag("_RARE_","O")));
         Map<Sentence.WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
 
@@ -107,7 +108,7 @@ public class NGramWordTaggerTest {
     @Ignore
     public void testReplaceLessFrequentWordTags() throws Exception {
         wordTagger.init("src/test/resources/gene.train");
-        TagResults tagResults = wordTagger.getTagResults();
+        NGramTagResults tagResults = (NGramTagResults) wordTagger.getTagResults();
         Map<WordTag,Integer> taggedWords = tagResults.getWordTagCountMap();
         assertEquals(new Integer(2),taggedWords.get(new WordTag("revascularisation","O")));
         assertEquals(399996,tagResults.getWords().size());

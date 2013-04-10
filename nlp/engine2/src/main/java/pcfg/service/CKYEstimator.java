@@ -3,12 +3,10 @@ package pcfg.service;
 import domain.DynamicProgrammingResults;
 import domain.NGramTag;
 import domain.Sentence;
-import pcfg.domain.CKYTagResults;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This ${TYPE}
@@ -55,6 +53,20 @@ public class CKYEstimator {
         }
     }
 
+    public String calculateFinalString(DynamicProgrammingResults dynamicProgrammingResults, String[] words, List<String> tags){
+        Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
+        Map<String, String> maxBackPointerMap = dynamicProgrammingResults.getMaxBackPointerMap();
+
+        piMap.get("pi(1,8,S)");
+        double currentMax = 0;
+        for(int i = 1; i <= words.length; i++){
+           for(String tag:tags){
+               //FIXME
+           }
+        }
+        return null;
+    }
+
     public DynamicProgrammingResults calculatePiMap(String[] words, List<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX){
 
         DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
@@ -76,15 +88,15 @@ public class CKYEstimator {
                 }
             }
         }
-        for(int level = 0; level <4; level++){
-            calculatePiMapAtEachLevel(words, tags, qFunctionY1Y2GivenX, qFunctionWordGivenX, piMap, maxBackPointerMap);
+        for(int l = 0; l <words.length; l++){
+            calculatePiMapAtEachLevel(words, tags, qFunctionY1Y2GivenX, qFunctionWordGivenX, piMap, maxBackPointerMap,l);
         }
         return dynamicProgrammingResults;
     }
 
-    protected void calculatePiMapAtEachLevel(String[] words, List<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX,Map<String, Double> piMap,Map<String, String> maxBackPointerMap){
-        for(int i=1; i <= words.length; i++){
-            for(int j=i+1; j<= words.length; j++){
+    protected void calculatePiMapAtEachLevel(String[] words, List<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX,Map<String, Double> piMap,Map<String, String> maxBackPointerMap, int l){
+        for(int i=1; i <= words.length-l; i++){
+                int j=i+l;
                 double currentMax = 0.0F;
                 for(int s=1; s<=words.length; s++){
                     for(String tag: tags){
@@ -113,6 +125,5 @@ public class CKYEstimator {
                 }
             }
         }
-    }
 
 }

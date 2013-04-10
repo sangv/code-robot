@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pcfg.domain.CKYTagResults;
+import pcfg.service.CKYEstimator;
 import reader.FileBasedSentenceReader;
 import reader.SentenceReader;
 import writer.FileOutputWriter;
@@ -38,6 +39,8 @@ public class SimpleTest {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleTest.class);
 
     ObjectMapper objectMapper = new ObjectMapper();
+
+    private CKYEstimator ckyEstimator = new CKYEstimator();
 
     @Test
     public void loadTree() throws Exception{
@@ -77,6 +80,64 @@ public class SimpleTest {
     }
 
     @Test
+    public void testSimpleExample() throws Exception {
+
+
+        Map<String,Map<String,Double>> qFunctionY1Y2GivenX = new LinkedHashMap<String,Map<String, Double>>();
+        Map<String,Double> childMap =new LinkedHashMap<String,Double>();
+        childMap.put("NP_AND_VP",1.0);
+        qFunctionY1Y2GivenX.put("S",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("Vt_AND_NP",0.8);
+        childMap.put("VP_AND_PP",0.2);
+        qFunctionY1Y2GivenX.put("VP",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("DT_AND_NN",0.8);
+        childMap.put("NP_AND_PP",0.2);
+        qFunctionY1Y2GivenX.put("NP",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("IN_AND_NP",1.0);
+        qFunctionY1Y2GivenX.put("PP",childMap);
+
+        Map<String,Map<String,Double>> qFunctionWordGivenX = new LinkedHashMap<String,Map<String, Double>>();
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("sleeps",1.0);
+        qFunctionWordGivenX.put("Vi",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("saw",1.0);
+        qFunctionWordGivenX.put("Vt",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("man",0.1);
+        childMap.put("woman",0.1);
+        childMap.put("telescope",0.3);
+        childMap.put("dog",0.5);
+        qFunctionWordGivenX.put("NN",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("the",1.0);
+        qFunctionWordGivenX.put("DT",childMap);
+
+        childMap =new LinkedHashMap<String,Double>();
+        childMap.put("with",0.6);
+        childMap.put("in",0.4);
+        qFunctionWordGivenX.put("IN",childMap);
+
+
+        String sentence = "the dog saw the man with the telescope";
+
+        DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),Arrays.asList(new String[]{"S","VP","NP","PP","Vt","DT","IN","Vi","NN"}),qFunctionY1Y2GivenX,qFunctionWordGivenX);
+        Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
+        Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
+
+
+    }
+
+    @Test
     public void loadReplacedTrainingwords() throws Exception {
 
         List<String> counts = sentenceReader.getContents("src/test/resources/pcfg/parse_train.counts.out");
@@ -90,26 +151,24 @@ public class SimpleTest {
                 tags.add(split[2]);
             } else if("UNARYRULE".equals(split[1])){
                 tagResults.getUnaryRuleCountMap().put(new WordTag(split[3], split[2]), new Integer(split[0]));
-                tags.add(split[2]);
             } else if("BINARYRULE".equals(split[1])){
                 tagResults.getBinaryRuleCountMap().put(new NGramTag(3, split[2], split[3], split[4]), new Integer(split[0]));
-                tags.addAll(Arrays.asList(new String[]{split[2], split[3], split[4]}));
             }
         }
 
         //Calculate QFunctions
-        Map<String,Double> qFunctionY1Y2GivenX = new LinkedHashMap<String,Double>();
-        calculateY1Y2GivenX(tagResults.getNonTerminalCountMap(),tagResults.getBinaryRuleCountMap(),qFunctionY1Y2GivenX);
+        Map<String,Map<String,Double>> qFunctionY1Y2GivenX = new LinkedHashMap<String,Map<String, Double>>();
+        ckyEstimator.calculateY1Y2GivenX(tagResults.getNonTerminalCountMap(),tagResults.getBinaryRuleCountMap(),qFunctionY1Y2GivenX);
 
-        Map<String,Double> qFunctionWordGivenX = new LinkedHashMap<String,Double>();
-        calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX);
+        Map<String,Map<String,Double>> qFunctionWordGivenX = new LinkedHashMap<String,Map<String, Double>>();
+        ckyEstimator.calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX);
 
         List<String> testData = sentenceReader.getContents("src/test/resources/pcfg/parse_dev.dat");
         String sentence = "What was the monetary value of the Nobel Peace Prize in 1989 ?";
         //for(String sentence: testData){
-            DynamicProgrammingResults dynamicProgrammingResults = calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults,false);
-            Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
-            Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
+        //DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX);
+        //Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
+       // Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
         //}
 
     }
@@ -132,7 +191,7 @@ public class SimpleTest {
         if(node.getWord() != null){
             childArrayNode.add(node.getEmission());
             if(rareWords != null && rareWords.contains(node.getWord())){
-            childArrayNode.add("_RARE_");
+                childArrayNode.add("_RARE_");
             } else {
                 childArrayNode.add(node.getWord());
             }
@@ -252,83 +311,13 @@ public class SimpleTest {
     protected void calculateXGivenY1Y2Counts(Node node,Map<String,Double> qFunctionMap){
         String emission = node.getEmission();
         if(node.getWord() == null){//implying that this is a non-terminal
-           String leftNodeEmission = node.getLeftNode() != null? node.getLeftNode().getEmission():null;
-           String rightNodeEmission = node.getRightNode() != null? node.getRightNode().getEmission():null;
+            String leftNodeEmission = node.getLeftNode() != null? node.getLeftNode().getEmission():null;
+            String rightNodeEmission = node.getRightNode() != null? node.getRightNode().getEmission():null;
             if(leftNodeEmission != null && rightNodeEmission != null){
 
             }
         }
 
     }
-
-
-    protected void calculateY1Y2GivenX(Map<String,Integer> nonTerminalTagCounts, Map<NGramTag,Integer> binaryRuleCounts, Map<String,Double> qFunctionMap){
-
-        for (Map.Entry<NGramTag,Integer> entry: binaryRuleCounts.entrySet()){
-            NGramTag binaryRuleTag = entry.getKey();
-            int numerator = entry.getValue();
-            int denominator = nonTerminalTagCounts.containsKey(binaryRuleTag.getTag()) ? nonTerminalTagCounts.get(binaryRuleTag.getTag()) : 0;
-            double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
-            if(qFunction > 0) {
-                qFunctionMap.put(binaryRuleTag.getTag() + "Implies" + binaryRuleTag.getOthers()[0] + "And" + binaryRuleTag.getOthers()[1],qFunction);
-            }
-        }
-    }
-
-    protected void calculateWordGivenX(Map<String,Integer> nonTerminalTagCounts, Map<WordTag,Integer> unaryRuleCounts, Map<String,Double> qFunctionMap){
-
-        for (Map.Entry<WordTag,Integer> entry: unaryRuleCounts.entrySet()){
-            WordTag wordTag = entry.getKey();
-            int numerator = entry.getValue();
-            int denominator = nonTerminalTagCounts.containsKey(wordTag.getTag()) ? nonTerminalTagCounts.get(wordTag.getTag()) : 0;
-            double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
-            if(qFunction > 0) {
-                qFunctionMap.put(wordTag.getTag() + "Implies" + wordTag.getWord(),qFunction);
-            }
-        }
-    }
-
-    protected DynamicProgrammingResults calculatePiMap(String[] words, Set<String> tags, Map<String, Double> qFunctionY1Y2GivenX, Map<String,Double> qFunctionWordGivenX, CKYTagResults tagResults, boolean useRareSubclasses){
-
-        DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
-        Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
-        Map<String, String> maxBackPointerMap = dynamicProgrammingResults.getMaxBackPointerMap();
-        Set<Map.Entry<NGramTag,Integer>> binaryRuleMap = tagResults.getBinaryRuleCountMap().entrySet();
-
-
-            for(int i=0; i < words.length; i++){
-                for(String tag: tags){
-                    String X = tag;
-                    double qValue = qFunctionWordGivenX.containsKey(X+"Implies"+words[i]) ? qFunctionWordGivenX.get(X+"Implies"+words[i]) : 0.0;
-                    piMap.put("pi("+i+","+i+","+X+")",qValue);
-                /*for(int j=i+1; j<words.length; j++){
-                    double currentMax = 0.0F;
-                    for(int s=0; s<words.length; s++){
-                        String key = "pi("+i+","+j+","+X+")";
-
-                        /*double expectation = 0.0F;
-                        if(tagResults.getWordCountMap().containsKey(words[k-1]) && tagResults.getWordCountMap().get(words[k-1]) >= 5){
-                            expectation = expectationMap.containsKey(wordTag) ? expectationMap.get(wordTag) : 0.0F;
-                        } else {
-                            String rareClass = "_RARE_";
-                            expectation = expectationMap.get(new WordTag(rareClass,tags[v]));
-                        }*/
-                        /*Double pivalue1 = piMap.containsKey("pi("+ i +","+s+"," + Y+ ")") ? piMap.get("pi("+ i +","+s+"," + Y+ ")") : 0.0F;
-                        Double pivalue2 = piMap.containsKey("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") ? piMap.get("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") : 0.0F;
-                        Double pivalue =  qFunctionY1Y2GivenX.get(X + "Implies" + Y + "And" + Z)*pivalue1*pivalue2;
-
-                        if(pivalue > currentMax){
-                            currentMax = pivalue;
-                            piMap.put(key,pivalue);
-                            maxBackPointerMap.put(i+","+j+","+X,s+"_"+Y+"_"+Z);
-                        }
-                    }
-                }*/
-            }
-        }
-        return dynamicProgrammingResults;
-    }
-
-
 
 }

@@ -136,7 +136,7 @@ public class SimpleTest {
 
         assertEquals(17,piMap.size());
         assertEquals(9,maxBackPointerMap.size());
-        assertEquals(7.372800000000002E-4,piMap.get("pi(1,8,S)"));
+        assertEquals(7.372800000000003E-4,piMap.get("1,8,S"));
     }
 
     @Test
@@ -175,6 +175,8 @@ public class SimpleTest {
         DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults);
         Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
         Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
+        Node parentNode = ckyEstimator.calculateFinalString(dynamicProgrammingResults, sentence.split(" "),tags);
+        System.out.println("Printing parent node: " + parentNode);
         //}
 
     }
@@ -312,18 +314,6 @@ public class SimpleTest {
             }
         }
         return toBeReplacedWords;
-    }
-
-    protected void calculateXGivenY1Y2Counts(Node node,Map<String,Double> qFunctionMap){
-        String emission = node.getEmission();
-        if(node.getWord() == null){//implying that this is a non-terminal
-            String leftNodeEmission = node.getLeftNode() != null? node.getLeftNode().getEmission():null;
-            String rightNodeEmission = node.getRightNode() != null? node.getRightNode().getEmission():null;
-            if(leftNodeEmission != null && rightNodeEmission != null){
-
-            }
-        }
-
     }
 
 }

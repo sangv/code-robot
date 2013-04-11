@@ -4,9 +4,9 @@ import domain.DynamicProgrammingResults;
 import domain.NGramTag;
 import domain.Sentence;
 import domain.TagResults;
+import pcfg.Node;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,18 +55,51 @@ public class CKYEstimator {
         }
     }
 
-    public String calculateFinalString(DynamicProgrammingResults dynamicProgrammingResults, String[] words, List<String> tags){
+    public Node calculateFinalString(DynamicProgrammingResults dynamicProgrammingResults, String[] words, Set<String> tags){
         Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
         Map<String, String> maxBackPointerMap = dynamicProgrammingResults.getMaxBackPointerMap();
 
-        piMap.get("pi(1,8,S)");
+        Node parentNode  = new Node();
+
+        buildFinalTree(parentNode, words, tags, piMap, maxBackPointerMap,1 , words.length);
+
+        return parentNode;
+    }
+
+    protected void buildFinalTree(Node node, String[] words, Set<String> tags, Map<String, Double> piMap, Map<String, String> maxBackPointerMap,int start, int end){
         double currentMax = 0;
-        for(int i = 1; i <= words.length; i++){
-           for(String tag:tags){
-               //FIXME
-           }
+        for(String tag: tags){
+            String key = start+","+end+","+tag;
+            double pivalue = piMap.containsKey(key) ? piMap.get(key) : 0.0;
+            if(pivalue > currentMax) {
+                currentMax = pivalue;
+                if(maxBackPointerMap.containsKey(key)){
+                    String[] s_Y_Z = maxBackPointerMap.get(key).split("_");
+                    int s = new Integer(s_Y_Z[0]);
+                    String Y = s_Y_Z[1];
+                    String Z = s_Y_Z[2];
+                    Node leftNode = new Node(null,Y);
+                    attachNode(leftNode,node);
+                    buildFinalTree(leftNode, words, tags, piMap, maxBackPointerMap, start, s);
+
+                    Node rightNode = new Node(null,Z);
+                    attachNode(rightNode,node);
+                    buildFinalTree(rightNode, words, tags, piMap, maxBackPointerMap,s+1,end);
+                }  else {
+                    String terminalTag = maxBackPointerMap.get(Integer.toString(start));
+                    Node childNode = new Node(words[start-1],terminalTag);
+                    attachNode(childNode,node);
+                }
+            }
         }
-        return null;
+    }
+
+    private void attachNode(Node node, Node parentNode) {
+        if(parentNode.getLeftNode() == null){
+            parentNode.setLeftNode(node);
+        } else {
+            parentNode.setRightNode(node);
+        }
     }
 
     public DynamicProgrammingResults calculatePiMap(String[] words, Set<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX, TagResults tagResults){
@@ -77,6 +110,7 @@ public class CKYEstimator {
 
 
         for(int i=1; i <= words.length; i++){
+            double currentMax = 0;
             for(String tag: tags){
                 String X = tag;
                 String WORD = words[i-1];
@@ -88,8 +122,10 @@ public class CKYEstimator {
                 if(emissionMap != null){
                     qValue = emissionMap.containsKey(WORD) ? emissionMap.get(WORD) : 0.0;
                 }
-                if(qValue > 0){
-                    piMap.put("pi("+i+","+i+","+X+")",qValue);
+                if(qValue > currentMax){
+                    currentMax = qValue;
+                    piMap.put(i+","+i+","+X,qValue);
+                    maxBackPointerMap.put(Integer.toString(i),X);
                 }
             }
         }
@@ -108,16 +144,17 @@ public class CKYEstimator {
                         String X = tag;
                         if(qFunctionY1Y2GivenX.containsKey(X)){
                             Map<String,Double> xEntries = qFunctionY1Y2GivenX.get(X);
+                            double currentMax = 0.0F;
                             for(Map.Entry<String,Double> xEntry:xEntries.entrySet()){
                                 String split[] = xEntry.getKey().split("_AND_");
                                 String Y = split[0];
                                 String Z = split[1];
-                                String key = "pi("+i+","+j+","+X+")";
-                                double currentMax = 0.0F;
-                                for(int s=1; s<=words.length; s++){
+                                String key = i+","+j+","+X;
 
-                                    Double pivalue1 = piMap.containsKey("pi("+ i +","+s+"," + Y+ ")") ? piMap.get("pi("+ i +","+s+"," + Y+ ")") : 0.0F;
-                                    Double pivalue2 = piMap.containsKey("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") ? piMap.get("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") : 0.0F;
+                                for(int s=i; s<=j-1; s++){
+
+                                    Double pivalue1 = piMap.containsKey(i +","+s+"," + Y) ? piMap.get(i +","+s+"," + Y) : 0.0F;
+                                    Double pivalue2 = piMap.containsKey(new Integer(s+1) +","+j+"," + Z) ? piMap.get(new Integer(s+1) +","+j+"," + Z) : 0.0F;
                                     Double pivalue =  xEntry.getValue()*pivalue1*pivalue2;
                                     if(pivalue > currentMax){
                                         currentMax = pivalue;

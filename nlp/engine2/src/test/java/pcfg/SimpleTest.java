@@ -140,6 +140,53 @@ public class SimpleTest {
     }
 
     @Test
+    public void runOnTestData() throws Exception {
+
+
+        List<String> trainingData = sentenceReader.getContents("src/test/resources/pcfg/parse_train.dat");
+        List<Node> sentences = new ArrayList<Node>();
+        CKYTagResults tagResults = trainData(trainingData,sentences);
+
+        List<String> counts = sentenceReader.getContents("src/test/resources/pcfg/parse_train.counts.out");
+        Set<String> tags = new LinkedHashSet<String>();
+
+        for(String result: counts){
+            String[] split = result.split(" ");
+            if("NONTERMINAL".equals(split[1])){
+                tagResults.getNonTerminalCountMap().put(split[2], new Integer(split[0]));
+                tags.add(split[2]);
+            } else if("UNARYRULE".equals(split[1])){
+                tagResults.getUnaryRuleCountMap().put(new WordTag(split[3], split[2]), new Integer(split[0]));
+            } else if("BINARYRULE".equals(split[1])){
+                tagResults.getBinaryRuleCountMap().put(new NGramTag(3, split[2], split[3], split[4]), new Integer(split[0]));
+            }
+        }
+
+        //Calculate QFunctions
+        Map<String,Map<String,Double>> qFunctionY1Y2GivenX = new LinkedHashMap<String,Map<String, Double>>();
+        ckyEstimator.calculateY1Y2GivenX(tagResults.getNonTerminalCountMap(),tagResults.getBinaryRuleCountMap(),qFunctionY1Y2GivenX);
+
+        Map<String,Map<String,Double>> qFunctionWordGivenX = new LinkedHashMap<String,Map<String, Double>>();
+        ckyEstimator.calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX,tagResults);
+
+        List<String> testData = sentenceReader.getContents("src/test/resources/pcfg/parse_dev.dat");
+        List<String> results = new ArrayList<String>();
+
+        for(String sentence: testData){
+            DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults);
+            Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
+            Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
+            Node parentNode = ckyEstimator.calculateFinalString(dynamicProgrammingResults, sentence.split(" "),tags);
+
+            ArrayNode outputArrayNode = rewriteTree(parentNode,null,null);
+            results.add(objectMapper.writeValueAsString(outputArrayNode).replaceAll(",",", "));
+        }
+
+        outputWriter.write("src/test/resources/pcfg/parse_dev.out",false,results);
+
+    }
+
+    @Test
     public void loadReplacedTrainingwords() throws Exception {
 
 
@@ -167,7 +214,7 @@ public class SimpleTest {
         ckyEstimator.calculateY1Y2GivenX(tagResults.getNonTerminalCountMap(),tagResults.getBinaryRuleCountMap(),qFunctionY1Y2GivenX);
 
         Map<String,Map<String,Double>> qFunctionWordGivenX = new LinkedHashMap<String,Map<String, Double>>();
-        ckyEstimator.calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX);
+        ckyEstimator.calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX,tagResults);
 
         List<String> testData = sentenceReader.getContents("src/test/resources/pcfg/parse_dev.dat");
         String sentence = "What are geckos ?";
@@ -176,7 +223,11 @@ public class SimpleTest {
         Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
         Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
         Node parentNode = ckyEstimator.calculateFinalString(dynamicProgrammingResults, sentence.split(" "),tags);
-        System.out.println("Printing parent node: " + parentNode);
+
+        ArrayNode outputArrayNode = rewriteTree(parentNode,null,null);
+        String outputString = objectMapper.writeValueAsString(outputArrayNode).replaceAll(",",", ");
+        LOG.info("Output String {}",outputString);
+        assertEquals("[\"SBARQ\", [\"WHNP+PRON\", \"What\"], [\"SBARQ\", [\"SQ\", [\"VERB\", \"are\"], [\"NP+NOUN\", \"geckos\"]], [\".\", \"?\"]]]",outputString);
         //}
 
     }

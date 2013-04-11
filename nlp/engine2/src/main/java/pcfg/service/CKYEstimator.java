@@ -36,19 +36,23 @@ public class CKYEstimator {
         }
     }
 
-    public void calculateWordGivenX(Map<String,Integer> nonTerminalTagCounts, Map<Sentence.WordTag,Integer> unaryRuleCounts, Map<String,Map<String,Double>> qFunctionMap){
+    public void calculateWordGivenX(Map<String,Integer> nonTerminalTagCounts, Map<Sentence.WordTag,Integer> unaryRuleCounts, Map<String,Map<String,Double>> qFunctionMap, TagResults tagResults){
 
         for (Map.Entry<Sentence.WordTag,Integer> entry: unaryRuleCounts.entrySet()){
             Sentence.WordTag wordTag = entry.getKey();
             int numerator = entry.getValue();
             int denominator = nonTerminalTagCounts.containsKey(wordTag.getTag()) ? nonTerminalTagCounts.get(wordTag.getTag()) : 0;
             double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
+            String WORD = wordTag.getWord();
+            if(tagResults != null && (!tagResults.getWordCountMap().containsKey(WORD) || tagResults.getWordCountMap().get(WORD) < 5)){
+                WORD = "_RARE_";
+            }
             if(qFunction > 0) {
                 if(qFunctionMap.containsKey(wordTag.getTag())) {
-                    qFunctionMap.get(wordTag.getTag()).put(wordTag.getWord(),qFunction);
+                    qFunctionMap.get(wordTag.getTag()).put(WORD,qFunction);
                 } else {
                     Map<String,Double> newMap = new LinkedHashMap<String,Double>();
-                    newMap.put(wordTag.getWord(),qFunction);
+                    newMap.put(WORD,qFunction);
                     qFunctionMap.put(wordTag.getTag(),newMap);
                 }
             }
@@ -61,37 +65,34 @@ public class CKYEstimator {
 
         Node parentNode  = new Node();
 
-        buildFinalTree(parentNode, words, tags, piMap, maxBackPointerMap,1 , words.length);
+        buildFinalTree(parentNode, words, piMap, maxBackPointerMap,"SBARQ",1, words.length);
 
         return parentNode;
     }
 
-    protected void buildFinalTree(Node node, String[] words, Set<String> tags, Map<String, Double> piMap, Map<String, String> maxBackPointerMap,int start, int end){
-        double currentMax = 0;
-        for(String tag: tags){
-            String key = start+","+end+","+tag;
-            double pivalue = piMap.containsKey(key) ? piMap.get(key) : 0.0;
-            if(pivalue > currentMax) {
-                currentMax = pivalue;
-                if(maxBackPointerMap.containsKey(key)){
-                    String[] s_Y_Z = maxBackPointerMap.get(key).split("_");
-                    int s = new Integer(s_Y_Z[0]);
-                    String Y = s_Y_Z[1];
-                    String Z = s_Y_Z[2];
-                    Node leftNode = new Node(null,Y);
-                    attachNode(leftNode,node);
-                    buildFinalTree(leftNode, words, tags, piMap, maxBackPointerMap, start, s);
+    protected void buildFinalTree(Node node, String[] words, Map<String, Double> piMap, Map<String, String> maxBackPointerMap,String tag,int start, int end){
 
-                    Node rightNode = new Node(null,Z);
-                    attachNode(rightNode,node);
-                    buildFinalTree(rightNode, words, tags, piMap, maxBackPointerMap,s+1,end);
-                }  else {
-                    String terminalTag = maxBackPointerMap.get(Integer.toString(start));
-                    Node childNode = new Node(words[start-1],terminalTag);
-                    attachNode(childNode,node);
-                }
+            node.setEmission(tag);
+            String key = start+","+end+","+tag;
+
+            if(maxBackPointerMap.containsKey(key)){
+                String[] s_Y_Z = maxBackPointerMap.get(key).split("_");
+                int s = new Integer(s_Y_Z[0]);
+                String Y = s_Y_Z[1];
+                String Z = s_Y_Z[2];
+                Node leftNode = new Node();
+                attachNode(leftNode,node);
+                buildFinalTree(leftNode, words, piMap, maxBackPointerMap, Y, start, s);
+
+                Node rightNode = new Node();
+                attachNode(rightNode,node);
+                buildFinalTree(rightNode, words, piMap, maxBackPointerMap,Z,s+1,end);
+            }  else if(start == end) {
+                String terminalTag = maxBackPointerMap.get(Integer.toString(start));
+                node.setEmission(terminalTag);
+                node.setWord(words[start-1]);
             }
-        }
+
     }
 
     private void attachNode(Node node, Node parentNode) {

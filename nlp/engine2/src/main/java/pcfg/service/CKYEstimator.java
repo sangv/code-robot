@@ -3,10 +3,12 @@ package pcfg.service;
 import domain.DynamicProgrammingResults;
 import domain.NGramTag;
 import domain.Sentence;
+import domain.TagResults;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This ${TYPE}
@@ -24,10 +26,10 @@ public class CKYEstimator {
             double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
             if(qFunction > 0) {
                 if(qFunctionMap.containsKey(binaryRuleTag.getTag())) {
-                    qFunctionMap.get(binaryRuleTag.getTag()).put(binaryRuleTag.getOthers()[0] + "And" + binaryRuleTag.getOthers()[1],qFunction);
+                    qFunctionMap.get(binaryRuleTag.getTag()).put(binaryRuleTag.getOthers()[0] + "_AND_" + binaryRuleTag.getOthers()[1],qFunction);
                 } else {
                     Map<String,Double> newMap = new LinkedHashMap<String,Double>();
-                    newMap.put(binaryRuleTag.getOthers()[0] + "And" + binaryRuleTag.getOthers()[1],qFunction);
+                    newMap.put(binaryRuleTag.getOthers()[0] + "_AND_" + binaryRuleTag.getOthers()[1],qFunction);
                     qFunctionMap.put(binaryRuleTag.getTag(),newMap);
                 }
             }
@@ -67,7 +69,7 @@ public class CKYEstimator {
         return null;
     }
 
-    public DynamicProgrammingResults calculatePiMap(String[] words, List<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX){
+    public DynamicProgrammingResults calculatePiMap(String[] words, Set<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX, TagResults tagResults){
 
         DynamicProgrammingResults dynamicProgrammingResults = new DynamicProgrammingResults();
         Map<String, Double> piMap = dynamicProgrammingResults.getPiMap();
@@ -78,6 +80,9 @@ public class CKYEstimator {
             for(String tag: tags){
                 String X = tag;
                 String WORD = words[i-1];
+                if(tagResults != null && (!tagResults.getWordCountMap().containsKey(WORD) || tagResults.getWordCountMap().get(WORD) < 5)){
+                    WORD = "_RARE_";
+                }
                 double qValue = 0;
                 Map<String,Double> emissionMap = qFunctionWordGivenX.containsKey(X) ? qFunctionWordGivenX.get(X) : null;
                 if(emissionMap != null){
@@ -94,11 +99,11 @@ public class CKYEstimator {
         return dynamicProgrammingResults;
     }
 
-    protected void calculatePiMapAtEachLevel(String[] words, List<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX,Map<String, Double> piMap,Map<String, String> maxBackPointerMap, int l){
+    protected void calculatePiMapAtEachLevel(String[] words, Set<String> tags, Map<String,Map<String,Double>> qFunctionY1Y2GivenX, Map<String,Map<String,Double>> qFunctionWordGivenX,Map<String, Double> piMap,Map<String, String> maxBackPointerMap, int l){
         for(int i=1; i <= words.length-l; i++){
                 int j=i+l;
-                double currentMax = 0.0F;
-                for(int s=1; s<=words.length; s++){
+
+
                     for(String tag: tags){
                         String X = tag;
                         if(qFunctionY1Y2GivenX.containsKey(X)){
@@ -108,22 +113,25 @@ public class CKYEstimator {
                                 String Y = split[0];
                                 String Z = split[1];
                                 String key = "pi("+i+","+j+","+X+")";
+                                double currentMax = 0.0F;
+                                for(int s=1; s<=words.length; s++){
 
-                                Double pivalue1 = piMap.containsKey("pi("+ i +","+s+"," + Y+ ")") ? piMap.get("pi("+ i +","+s+"," + Y+ ")") : 0.0F;
-                                Double pivalue2 = piMap.containsKey("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") ? piMap.get("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") : 0.0F;
-                                Double pivalue =  xEntry.getValue()*pivalue1*pivalue2;
-
-                                if(pivalue > currentMax){
-                                    currentMax = pivalue;
-                                    piMap.put(key,pivalue);
-                                    maxBackPointerMap.put(i+","+j+","+X,s+"_"+Y+"_"+Z);
+                                    Double pivalue1 = piMap.containsKey("pi("+ i +","+s+"," + Y+ ")") ? piMap.get("pi("+ i +","+s+"," + Y+ ")") : 0.0F;
+                                    Double pivalue2 = piMap.containsKey("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") ? piMap.get("pi("+ new Integer(s+1) +","+j+"," + Z+ ")") : 0.0F;
+                                    Double pivalue =  xEntry.getValue()*pivalue1*pivalue2;
+                                    if(pivalue > currentMax){
+                                        currentMax = pivalue;
+                                        piMap.put(key,pivalue);
+                                        maxBackPointerMap.put(i+","+j+","+X,s+"_"+Y+"_"+Z);
+                                    }
                                 }
+
                             }
                         }
 
                     }
                 }
-            }
+
         }
 
 }

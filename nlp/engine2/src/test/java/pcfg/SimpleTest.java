@@ -130,19 +130,24 @@ public class SimpleTest {
 
         String sentence = "the dog saw the man with the telescope";
 
-        DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),Arrays.asList(new String[]{"S","VP","NP","PP","Vt","DT","IN","Vi","NN"}),qFunctionY1Y2GivenX,qFunctionWordGivenX);
+        DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),new LinkedHashSet<String>(Arrays.asList(new String[]{"S","VP","NP","PP","Vt","DT","IN","Vi","NN"})),qFunctionY1Y2GivenX,qFunctionWordGivenX,null);
         Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
         Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
 
-
-
+        assertEquals(17,piMap.size());
+        assertEquals(9,maxBackPointerMap.size());
+        assertEquals(7.372800000000002E-4,piMap.get("pi(1,8,S)"));
     }
 
     @Test
     public void loadReplacedTrainingwords() throws Exception {
 
+
+        List<String> trainingData = sentenceReader.getContents("src/test/resources/pcfg/parse_train.dat");
+        List<Node> sentences = new ArrayList<Node>();
+        CKYTagResults tagResults = trainData(trainingData,sentences);
+
         List<String> counts = sentenceReader.getContents("src/test/resources/pcfg/parse_train.counts.out");
-        CKYTagResults tagResults = new CKYTagResults();
         Set<String> tags = new LinkedHashSet<String>();
 
         for(String result: counts){
@@ -165,11 +170,11 @@ public class SimpleTest {
         ckyEstimator.calculateWordGivenX(tagResults.getNonTerminalCountMap(),tagResults.getUnaryRuleCountMap(),qFunctionWordGivenX);
 
         List<String> testData = sentenceReader.getContents("src/test/resources/pcfg/parse_dev.dat");
-        String sentence = "What was the monetary value of the Nobel Peace Prize in 1989 ?";
+        String sentence = "What are geckos ?";
         //for(String sentence: testData){
-        //DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX);
-        //Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
-       // Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
+        DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults);
+        Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
+        Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
         //}
 
     }

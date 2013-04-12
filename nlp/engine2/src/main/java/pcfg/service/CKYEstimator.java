@@ -41,12 +41,11 @@ public class CKYEstimator {
         for (Map.Entry<Sentence.WordTag,Integer> entry: unaryRuleCounts.entrySet()){
             Sentence.WordTag wordTag = entry.getKey();
             int numerator = entry.getValue();
+            String WORD = wordTag.getWord();
+
             int denominator = nonTerminalTagCounts.containsKey(wordTag.getTag()) ? nonTerminalTagCounts.get(wordTag.getTag()) : 0;
             double qFunction = denominator > 0? (double)numerator/(double)denominator : 0.0F;
-            String WORD = wordTag.getWord();
-            if(tagResults != null && (!tagResults.getWordCountMap().containsKey(WORD) || tagResults.getWordCountMap().get(WORD) < 5)){
-                WORD = "_RARE_";
-            }
+
             if(qFunction > 0) {
                 if(qFunctionMap.containsKey(wordTag.getTag())) {
                     qFunctionMap.get(wordTag.getTag()).put(WORD,qFunction);

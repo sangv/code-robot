@@ -171,16 +171,17 @@ public class SimpleTest {
 
         List<String> testData = sentenceReader.getContents("src/test/resources/pcfg/parse_dev.dat");
         List<String> results = new ArrayList<String>();
-
-        for(String sentence: testData){
+        //String sentence = "How many miles is it from London , England to Plymouth , England ?";
+        //String sentence = "What was the monetary value of the Nobel Peace Prize in 1989 ?";
+        String sentence = "Where is Inoco based ?";
+        //for(String sentence: testData){
             DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults);
-            Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
-            Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
             Node parentNode = ckyEstimator.calculateFinalString(dynamicProgrammingResults, sentence.split(" "),tags);
 
             ArrayNode outputArrayNode = rewriteTree(parentNode,null,null);
             results.add(objectMapper.writeValueAsString(outputArrayNode).replaceAll(",",", "));
-        }
+        LOG.info(results.get(0));
+        //}
 
         outputWriter.write("src/test/resources/pcfg/parse_dev.out",false,results);
 
@@ -220,8 +221,6 @@ public class SimpleTest {
         String sentence = "What are geckos ?";
         //for(String sentence: testData){
         DynamicProgrammingResults dynamicProgrammingResults = ckyEstimator.calculatePiMap(sentence.split(" "),tags,qFunctionY1Y2GivenX,qFunctionWordGivenX,tagResults);
-        Map<String, Double> piMap =  dynamicProgrammingResults.getPiMap();
-        Map<String, String> maxBackPointerMap =  dynamicProgrammingResults.getMaxBackPointerMap();
         Node parentNode = ckyEstimator.calculateFinalString(dynamicProgrammingResults, sentence.split(" "),tags);
 
         ArrayNode outputArrayNode = rewriteTree(parentNode,null,null);
